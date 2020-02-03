@@ -1,0 +1,54 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven { url "https://appboy.github.io/appboy-android-sdk/sdk" }
+
+
+    }
+    dependencies {
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.4.1'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+    }
+}
+
+repositories {
+    maven { url "https://appboy.github.io/appboy-android-sdk/sdk" }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+android {
+    compileSdkVersion 29
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 29
+        versionCode 1
+        versionName "0.1.1"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+
+    //compileOnly 'com.rudderlabs.android.sdk:rudder-sdk-core:0.1.5'
+    compileOnly project(':rudder-sdk-core')
+    compileOnly 'com.google.code.gson:gson:2.8.6'
+
+    implementation 'com.appboy:android-sdk-ui:5.0.+'
+    testImplementation 'com.android.support.test:rules:1.0.2'
+    testImplementation 'com.android.support.test:runner:1.0.2'
+    testImplementation "org.robolectric:robolectric:4.3"
+    testImplementation "androidx.test:core-ktx:1.2.0"
+}
+
+apply from: './maven.gradle'
