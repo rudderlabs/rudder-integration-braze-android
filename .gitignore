@@ -1,0 +1,8 @@
+**/.DS_Store
+*.iml
+**/build/
+.gradle/
+.idea/
+/rudder-sdk-core
+local.properties
+Users-raj-rudder-rudder-integration-braze-android.iml

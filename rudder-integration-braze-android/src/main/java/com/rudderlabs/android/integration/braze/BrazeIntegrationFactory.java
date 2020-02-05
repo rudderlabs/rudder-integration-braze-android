@@ -3,8 +3,11 @@ package com.rudderlabs.android.integration.braze;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 
+
+import androidx.annotation.NonNull;
 
 import com.appboy.Appboy;
 import com.appboy.configuration.AppboyConfig;
@@ -12,7 +15,6 @@ import com.appboy.enums.Gender;
 import com.appboy.enums.Month;
 import com.appboy.models.outgoing.AppboyProperties;
 import com.appboy.models.outgoing.AttributionData;
-import com.appboy.support.StringUtils;
 import com.appboy.ui.inappmessage.AppboyInAppMessageManager;
 import com.rudderstack.android.sdk.core.MessageType;
 import com.rudderstack.android.sdk.core.RudderClient;
@@ -20,11 +22,11 @@ import com.rudderstack.android.sdk.core.RudderConfig;
 import com.rudderstack.android.sdk.core.RudderIntegration;
 import com.rudderstack.android.sdk.core.RudderMessage;
 import com.rudderstack.android.sdk.core.RudderTraits;
-import com.rudderstack.android.sdk.core.util.Utils;
 
 import org.json.JSONObject;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -93,7 +95,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                         Boolean.getBoolean((String)destinationConfig.get(AUTO_IN_APP_MESSAGE_REGISTER ));
             }
         }
-        if (StringUtils.isNullOrBlank(apiKey)) {
+        if (TextUtils.isEmpty(apiKey)) {
             Log.w(LOG_KEY,"Braze integration not initialized due to invalid api key.");
             return;
         }
@@ -104,6 +106,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
         /*if (!StringUtils.isNullOrBlank(customEndpoint)) {
             builder.setCustomEndpoint(customEndpoint);
         }*/
+        builder.setCustomEndpoint("sdk.fra-01.braze.eu");
 
         Appboy.configure(client.getApplication().getApplicationContext(), builder.build());
         this.appBoy = Appboy.getInstance(client.getApplication()) ;
@@ -160,7 +163,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
     }
 
     private void processRudderEvent(RudderMessage element) {
-        if (element != null && element.getType() != null) {
+        if (element.getType() != null) {
             switch (element.getType()) {
                 case MessageType.TRACK:
                     if (element == null) {
@@ -189,7 +192,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                         Log.v(LOG_KEY, "Check the format of Install Attributed event . Caught "+ exception);
                     }
                     if (eventProperties == null || eventProperties.size() == 0) {
-                        Log.v(LOG_KEY,"appboy event has no properties");
+                        Log.v(LOG_KEY,"Braze event has no properties");
                         appBoy.logCustomEvent(element.getEventName());
                         return;
                     }
@@ -202,22 +205,22 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
 
                         String currency = String.valueOf(eventProperties.get(CURRENCY_KEY));
                         if (revenue != 0) {
-                            String currencyCode = StringUtils.isNullOrBlank(currency) ? DEFAULT_CURRENCY_CODE
+                            String currencyCode = TextUtils.isEmpty(currency) ? DEFAULT_CURRENCY_CODE
                                     : currency;
                             propertiesJson.remove(REVENUE_KEY);
                             propertiesJson.remove(CURRENCY_KEY);
                             if (propertiesJson.length() == 0) {
-                                Log.v(LOG_KEY,"appboy logPurchase for purchase "+element.getEventName()+" for "+revenue+" "+ currencyCode+" with no"
+                                Log.v(LOG_KEY,"Braze logPurchase for purchase "+element.getEventName()+" for "+revenue+" "+ currencyCode+" with no"
                                         + " properties." );
                                 appBoy.logPurchase(element.getEventName(), currencyCode, new BigDecimal(revenue));
                             } else {
-                                Log.v(LOG_KEY,"appboy logPurchase for purchase "+element.getEventName()+" for "+revenue+" "+ currencyCode+" "+propertiesJson.toString());
+                                Log.v(LOG_KEY,"Braze logPurchase for purchase "+element.getEventName()+" for "+revenue+" "+ currencyCode+" "+propertiesJson.toString());
                                 appBoy.logPurchase(event, currencyCode, new BigDecimal(revenue),
                                         new AppboyProperties(propertiesJson));
                             }
                         }
                     }else {
-                        Log.v(LOG_KEY,"appBoy logCustomEvent for event "+element.getEventName()+" with properties % "+ propertiesJson.toString());
+                        Log.v(LOG_KEY,"Braze logCustomEvent for event "+element.getEventName()+" with properties % "+ propertiesJson.toString());
                         appBoy.logCustomEvent(event, new AppboyProperties(propertiesJson));
                     }
 
@@ -225,7 +228,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                 case MessageType.IDENTIFY:
 
                     String userId = element.getUserId();
-                    if (!StringUtils.isNullOrBlank(userId)) {
+                    if (!TextUtils.isEmpty(userId)) {
                         appBoy.changeUser(userId);
                     }
 
@@ -235,7 +238,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                         return;
                     }
 
-                    Date birthday = Utils.dateFromString(RudderTraits.getBirthday(traitsMap));
+                    Date birthday =  dateFromString(RudderTraits.getBirthday(traitsMap));
                     if (birthday != null) {
                         Calendar birthdayCal = Calendar.getInstance(Locale.US);
                         birthdayCal.setTime(birthday);
@@ -245,22 +248,22 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     }
 
                     String email = RudderTraits.getEmail(traitsMap);
-                    if (!StringUtils.isNullOrBlank(email)) {
+                    if (!TextUtils.isEmpty(email)) {
                         appBoy.getCurrentUser().setEmail(email);
                     }
 
                     String firstName = RudderTraits.getFirstname(traitsMap);
-                    if (!StringUtils.isNullOrBlank(firstName)) {
+                    if (!TextUtils.isEmpty(firstName)) {
                         appBoy.getCurrentUser().setFirstName(firstName);
                     }
 
                     String lastName = RudderTraits.getLastname(traitsMap);
-                    if (!StringUtils.isNullOrBlank(lastName)) {
+                    if (!TextUtils.isEmpty(lastName)) {
                         appBoy.getCurrentUser().setLastName(lastName);
                     }
 
                     String gender = RudderTraits.getGender(traitsMap);
-                    if (!StringUtils.isNullOrBlank(gender)) {
+                    if (!TextUtils.isEmpty(gender)) {
                         if (MALE_KEYS.contains(gender.toUpperCase())) {
                             appBoy.getCurrentUser().setGender(Gender.MALE);
                         } else if (FEMALE_KEYS.contains(gender.toUpperCase())) {
@@ -269,18 +272,18 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     }
 
                     String phone = RudderTraits.getPhone(traitsMap);
-                    if (!StringUtils.isNullOrBlank(phone)) {
+                    if (!TextUtils.isEmpty(phone)) {
                         appBoy.getCurrentUser().setPhoneNumber(phone);
                     }
 
                     RudderTraits.Address address = RudderTraits.Address.fromString(RudderTraits.getAddress(traitsMap));
                     if (address != null) {
                         String city = address.getCity();
-                        if (!StringUtils.isNullOrBlank(city)) {
+                        if (!TextUtils.isEmpty(city)) {
                             appBoy.getCurrentUser().setHomeCity(city);
                         }
                         String country = address.getCountry();
-                        if (!StringUtils.isNullOrBlank(country)) {
+                        if (!TextUtils.isEmpty(country)) {
                             appBoy.getCurrentUser().setCountry(country);
                         }
                     }
@@ -306,7 +309,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                         } else if (value instanceof String) {
                             appBoy.getCurrentUser().setCustomUserAttribute(key, (String) value);
                         } else {
-                            Log.d(LOG_KEY,"Appboy can't map rudder value for custom Appboy user "
+                            Log.d(LOG_KEY,"Braze can't map rudder value for custom Braze user "
                                     + "attribute with key "+  key + "and value "+value);
                         }
                     }
@@ -325,7 +328,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
     @Override
     public void flush() {
         super.flush();
-        Log.w(LOG_KEY," appboy requestImmediateDataFlush().");
+        Log.w(LOG_KEY," Braze requestImmediateDataFlush().");
         appBoy.requestImmediateDataFlush();
     }
 
@@ -337,14 +340,23 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
 
 
     @Override
-    public void dump(RudderMessage element) {
+    public void dump(@NonNull RudderMessage element) {
 
-        if(appBoy != null)
+        if(appBoy != null && element != null)
             processRudderEvent(element);
     }
 
     @Override
     public Appboy getUnderlyingInstance() {
         return appBoy;
+    }
+
+    private static Date dateFromString(String date) {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        try {
+            return formatter.parse(date);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
