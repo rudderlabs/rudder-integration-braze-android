@@ -1,4 +1,4 @@
-package com.rudderlabs.android.integration.braze;
+package com.rudderstack.android.integration.braze;
 
 import android.app.Activity;
 import android.app.Application;
@@ -142,8 +142,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
 
                 @Override
                 public void onActivityStarted(Activity activity) {
-                    appBoy.openSession(activity);
-
+                    if(appBoy != null)
+                        appBoy.openSession(activity);
 
                 }
 
@@ -163,7 +163,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
 
                 @Override
                 public void onActivityStopped(Activity activity) {
-                    appBoy.closeSession(activity);
+                    if(appBoy != null)
+                        appBoy.closeSession(activity);
 
                 }
 
@@ -183,10 +184,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
     private void processRudderEvent(RudderMessage element) {
         if (element.getType() != null) {
             switch (element.getType()) {
-                case MessageType.TRACK:
-                    if (element == null) {
-                        return;
-                    }
+                case MessageType.TRACK: 
                     String event =  element.getEventName() ;
                     if (event == null) {
                         return;
