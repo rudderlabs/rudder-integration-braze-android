@@ -23,7 +23,7 @@ import com.rudderstack.android.sdk.core.RudderIntegration;
 import com.rudderstack.android.sdk.core.RudderMessage;
 import com.rudderstack.android.sdk.core.RudderTraits;
 
-import org.json.JSONObject;
+import org.json.JSONObject; 
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -67,7 +67,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
     private static final String DEFAULT_CURRENCY_CODE = "USD";
 
 
-    private static final String CUSTOM_ENDPOINT_KEY = "customEndpoint";
+    private static final String DATA_CENTER_KEY = "dataCenter";
     private static final String REVENUE_KEY = "revenue";
     private static final String CURRENCY_KEY = "currency";
 
@@ -103,10 +103,28 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
 
         AppboyConfig.Builder builder = new AppboyConfig.Builder()
                 .setApiKey(apiKey);
-        /*if (!StringUtils.isNullOrBlank(customEndpoint)) {
-            builder.setCustomEndpoint(customEndpoint);
-        }*/
-        builder.setCustomEndpoint("sdk.fra-01.braze.eu");
+        String endPoint = "";
+        if(destinationConfig.containsKey(DATA_CENTER_KEY)) {
+            endPoint = (String) destinationConfig.get(DATA_CENTER_KEY);
+        }
+        if (!TextUtils.isEmpty(endPoint)) {
+            endPoint = endPoint.trim();
+            if("US-01".equals(endPoint))
+                builder.setCustomEndpoint("sdk.iad-01.braze.com");
+            else  if("US-02".equals(endPoint))
+                builder.setCustomEndpoint("sdk.iad-02.braze.com");
+            else  if("US-03".equals(endPoint))
+                builder.setCustomEndpoint("sdk.iad-03.braze.com");
+            else  if("US-04".equals(endPoint))
+                builder.setCustomEndpoint("sdk.iad-04.braze.com");
+            else  if("US-06".equals(endPoint))
+                builder.setCustomEndpoint("sdk.iad-06.braze.com");
+            else  if("US-08".equals(endPoint))
+                builder.setCustomEndpoint("sdk.iad-08.braze.com");
+            else  if("EU-01".equals(endPoint))
+                builder.setCustomEndpoint("sdk.fra-01.braze.eu");
+
+        }
 
         Appboy.configure(client.getApplication().getApplicationContext(), builder.build());
         this.appBoy = Appboy.getInstance(client.getApplication()) ;
