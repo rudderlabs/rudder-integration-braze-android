@@ -1,4 +1,4 @@
-package com.rudderlabs.android.sdk.core;
+package com.rudderstack.android.sdk.core;
 
 import android.content.Context;
 

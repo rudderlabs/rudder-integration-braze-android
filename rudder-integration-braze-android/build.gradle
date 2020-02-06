@@ -40,8 +40,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 
-    //compileOnly 'com.rudderlabs.android.sdk:rudder-sdk-core:0.1.5'
-    compileOnly project(':rudder-sdk-core')
+    compileOnly 'com.rudderlabs.android.sdk:rudder-sdk-core:1.0.1'
     compileOnly 'com.google.code.gson:gson:2.8.6'
 
     implementation 'com.appboy:android-sdk-ui:5.0.+'

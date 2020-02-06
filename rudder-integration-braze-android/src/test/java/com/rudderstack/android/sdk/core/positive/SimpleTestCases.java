@@ -1,7 +1,7 @@
-package com.rudderlabs.android.sdk.core.positive;
+package com.rudderstack.android.sdk.core.positive;
 
 
-import com.rudderlabs.android.sdk.core.*;
+import com.rudderstack.android.sdk.core.*;
 import org.junit.Test;
 
 
