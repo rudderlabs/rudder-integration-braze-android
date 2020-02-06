@@ -12,6 +12,7 @@ buildscript {
 }
 
 repositories {
+    maven { url "https://dl.bintray.com/rudderstack/rudderstack" }
     maven { url "https://appboy.github.io/appboy-android-sdk/sdk" }
 }
 
@@ -26,7 +27,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 29
         versionCode 1
-        versionName "0.1.1"
+        versionName "0.1.0"
     }
 
     buildTypes {
@@ -40,7 +41,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 
-    compileOnly 'com.rudderlabs.android.sdk:rudder-sdk-core:1.0.1'
+    compileOnly 'com.rudderstack.android.sdk:core:1.0.0.2'
     compileOnly 'com.google.code.gson:gson:2.8.6'
 
     implementation 'com.appboy:android-sdk-ui:5.0.+'

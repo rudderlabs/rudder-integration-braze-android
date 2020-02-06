@@ -1,4 +1,4 @@
-[ ![Download](https://api.bintray.com/packages/rudderlabs-bintray/rudder-sdk-android-core/rudder-integration-braze-android/images/download.svg?version=0.1.1) ](https://bintray.com/rudderlabs-bintray/rudder-sdk-android-core/rudder-integration-braze-android/0.1.1/link)
+[ ![Download](https://api.bintray.com/packages/rudderstack/rudderstack/braze/images/download.svg?version=0.1.0) ](https://bintray.com/rudderstack/rudderstack/braze/0.1.0/link)
 
 # What is Rudder?
 
@@ -16,15 +16,13 @@ Released under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 2. Add these lines to your ```app/build.gradle```
 ```
 repositories {
-  maven {
-    url  "https://dl.bintray.com/rudderlabs-bintray/rudder-sdk-android-core"
-  }
+  maven { url "https://dl.bintray.com/rudderstack/rudderstack" }
 }
 ```
 3. Add the dependency under ```dependencies```
 ```
-implementation 'com.rudderlabs.android.sdk:rudder-sdk-core:0.1.4'
-implementation 'com.rudderlabs.android.integration.braze:rudder-integration-braze-android:0.1.1'
+implementation 'com.rudderstack.android.sdk:core:1.0.0.2'
+implementation 'com.rudderstack.android.integration:braze:0.1.0'
 ```
 
 ## Initialize ```RudderClient```

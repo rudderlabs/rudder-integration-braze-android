@@ -63,11 +63,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
 
     private static final String AUTO_IN_APP_MESSAGE_REGISTER =
             "auto_in_app_message_register";
-
-    private static final String DEFAULT_CURRENCY_CODE = "USD";
-
-
     private static final String DATA_CENTER_KEY = "dataCenter";
+    private static final String DEFAULT_CURRENCY_CODE = "USD";
     private static final String REVENUE_KEY = "revenue";
     private static final String CURRENCY_KEY = "currency";
 
