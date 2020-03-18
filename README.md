@@ -41,7 +41,3 @@ val rudderClient: RudderClient = RudderClient.getInstance(
 ## Send Events
 Follow the steps from [Rudder Android SDK](https://github.com/rudderlabs/rudder-sdk-android)
 
-# Coming Soon
-1. Native platform SDK integration support
-2. More documentation
-3. More destination support
