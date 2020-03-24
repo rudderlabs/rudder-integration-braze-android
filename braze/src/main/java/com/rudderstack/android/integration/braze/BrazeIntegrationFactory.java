@@ -6,8 +6,8 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 
-
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.appboy.Appboy;
 import com.appboy.configuration.AppboyConfig;
@@ -15,22 +15,23 @@ import com.appboy.enums.Gender;
 import com.appboy.enums.Month;
 import com.appboy.models.outgoing.AppboyProperties;
 import com.appboy.models.outgoing.AttributionData;
+import com.appboy.support.AppboyLogger;
 import com.appboy.ui.inappmessage.AppboyInAppMessageManager;
 import com.rudderstack.android.sdk.core.MessageType;
 import com.rudderstack.android.sdk.core.RudderClient;
 import com.rudderstack.android.sdk.core.RudderConfig;
 import com.rudderstack.android.sdk.core.RudderIntegration;
+import com.rudderstack.android.sdk.core.RudderLogger;
 import com.rudderstack.android.sdk.core.RudderMessage;
 import com.rudderstack.android.sdk.core.RudderTraits;
 
-import org.json.JSONObject; 
+import org.json.JSONObject;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -39,10 +40,8 @@ import java.util.Set;
 
 public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
     private static final String APPBOY_KEY = "Braze";
-    private static final String LOG_KEY = "RudderSDK-Braze";
     private Appboy appBoy;
-    private Map<String, String> eventMap = new HashMap<>();
-
+    
     public static Factory FACTORY = new Factory() {
         @Override
         public RudderIntegration<?> create(Object settings, RudderClient client, RudderConfig rudderConfig) {
@@ -55,124 +54,143 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
         }
     };
 
-
-    private static final Set<String> MALE_KEYS = new HashSet<String>(Arrays.asList("M",
+    private static final Set<String> MALE_KEYS = new HashSet<>(Arrays.asList("M",
             "MALE"));
-    private static final Set<String> FEMALE_KEYS = new HashSet<String>(Arrays.asList("F",
+    private static final Set<String> FEMALE_KEYS = new HashSet<>(Arrays.asList("F",
             "FEMALE"));
-
-    private static final String AUTO_IN_APP_MESSAGE_REGISTER =
-            "auto_in_app_message_register";
-    private static final String DATA_CENTER_KEY = "dataCenter";
-    private static final String DEFAULT_CURRENCY_CODE = "USD";
-    private static final String REVENUE_KEY = "revenue";
-    private static final String CURRENCY_KEY = "currency";
-
-    private static final List<String> RESERVED_KEYSET = Arrays.asList("birthday", "email", "firstName",
+    private static final List<String> RESERVED_KEY_SET = Arrays.asList("birthday", "email", "firstName",
             "lastName", "gender", "phone", "address");
 
+    private static final String AUTO_IN_APP_MESSAGE_REGISTER = "auto_in_app_message_register";
 
+    private static final String DEFAULT_CURRENCY_CODE = "USD";
 
-    private static final String API_KEY  = "appKey";
+    private static final String REVENUE_KEY = "revenue";
+    private static final String CURRENCY_KEY = "currency";
+    private static final String DATA_CENTER_KEY = "dataCenter";
+    private static final String API_KEY = "appKey";
 
     private boolean autoInAppMessageRegEnabled;
 
     private BrazeIntegrationFactory(Object config, final RudderClient client, RudderConfig rudderConfig) {
-
-
         String apiKey = "";
         Map<String, Object> destinationConfig = (Map<String, Object>) config;
-        if (destinationConfig != null )
-        {
-            if(destinationConfig.containsKey(API_KEY)) {
+        if (destinationConfig == null) {
+            RudderLogger.logError("Invalid api key. Aborting Braze initialization.");
+        } else if (client.getApplication() == null) {
+            RudderLogger.logError("RudderClient is not initialized correctly. Application is null. Aborting Braze initialization.");
+        } else {
+            // get apiKey and return if null or blank
+            if (destinationConfig.containsKey(API_KEY)) {
                 apiKey = (String) destinationConfig.get(API_KEY);
             }
-            if(destinationConfig.containsKey(AUTO_IN_APP_MESSAGE_REGISTER)) {
-                autoInAppMessageRegEnabled =
-                        Boolean.getBoolean((String)destinationConfig.get(AUTO_IN_APP_MESSAGE_REGISTER ));
+            if (TextUtils.isEmpty(apiKey)) {
+                RudderLogger.logError("Invalid api key. Aborting Braze initialization.");
+                return;
             }
-        }
-        if (TextUtils.isEmpty(apiKey)) {
-            Log.w(LOG_KEY,"Braze integration not initialized due to invalid api key.");
-            return;
-        }
 
+            // check for auto in app message register. default false
+            if (destinationConfig.containsKey(AUTO_IN_APP_MESSAGE_REGISTER)) {
+                String autoInAppMessageRegEnabledStr = (String) destinationConfig.get(AUTO_IN_APP_MESSAGE_REGISTER);
+                if (autoInAppMessageRegEnabledStr != null) {
+                    autoInAppMessageRegEnabled = Boolean.getBoolean(autoInAppMessageRegEnabledStr);
+                }
+            }
 
-        AppboyConfig.Builder builder = new AppboyConfig.Builder()
-                .setApiKey(apiKey);
-        String endPoint = "";
-        if(destinationConfig.containsKey(DATA_CENTER_KEY)) {
-            endPoint = (String) destinationConfig.get(DATA_CENTER_KEY);
-        }
-        if (!TextUtils.isEmpty(endPoint)) {
+            // get endpoint
+            String endPoint = "";
+            if (destinationConfig.containsKey(DATA_CENTER_KEY)) {
+                endPoint = (String) destinationConfig.get(DATA_CENTER_KEY);
+            }
+
+            if (TextUtils.isEmpty(endPoint)) {
+                RudderLogger.logError("EndPointUrl is empty. Aborting Braze initialization.");
+                return;
+            }
+
+            String customEndPoint = "";
             endPoint = endPoint.trim();
-            if("US-01".equals(endPoint))
-                builder.setCustomEndpoint("sdk.iad-01.braze.com");
-            else  if("US-02".equals(endPoint))
-                builder.setCustomEndpoint("sdk.iad-02.braze.com");
-            else  if("US-03".equals(endPoint))
-                builder.setCustomEndpoint("sdk.iad-03.braze.com");
-            else  if("US-04".equals(endPoint))
-                builder.setCustomEndpoint("sdk.iad-04.braze.com");
-            else  if("US-06".equals(endPoint))
-                builder.setCustomEndpoint("sdk.iad-06.braze.com");
-            else  if("US-08".equals(endPoint))
-                builder.setCustomEndpoint("sdk.iad-08.braze.com");
-            else  if("EU-01".equals(endPoint))
-                builder.setCustomEndpoint("sdk.fra-01.braze.eu");
+            switch (endPoint) {
+                case "US-01":
+                    customEndPoint = "sdk.iad-01.braze.com";
+                    break;
+                case "US-02":
+                    customEndPoint = "sdk.iad-02.braze.com";
+                    break;
+                case "US-03":
+                    customEndPoint = "sdk.iad-03.braze.com";
+                    break;
+                case "US-04":
+                    customEndPoint = "sdk.iad-04.braze.com";
+                    break;
+                case "US-06":
+                    customEndPoint = "sdk.iad-06.braze.com";
+                    break;
+                case "US-08":
+                    customEndPoint = "sdk.iad-08.braze.com";
+                    break;
+                case "EU-01":
+                    customEndPoint = "sdk.fra-01.braze.eu";
+                    break;
+            }
+            if (customEndPoint.isEmpty()) {
+                RudderLogger.logError("CustomEndPointUrl is blank or incorrect. Aborting Braze initialization.");
+                return;
+            }
 
-        }
+            // all good. initialize braze sdk
+            AppboyConfig.Builder builder = new AppboyConfig.Builder().setApiKey(apiKey);
+            builder.setCustomEndpoint(customEndPoint);
+            AppboyLogger.setLogLevel(
+                    rudderConfig.getLogLevel() >= RudderLogger.RudderLogLevel.DEBUG ?
+                            Log.VERBOSE : Log.ERROR
+            );
+            Appboy.configure(client.getApplication().getApplicationContext(), builder.build());
+            this.appBoy = Appboy.getInstance(client.getApplication());
+            RudderLogger.logInfo("Configured Braze + Rudder integration and initialized Braze.");
 
-        Appboy.configure(client.getApplication().getApplicationContext(), builder.build());
-        this.appBoy = Appboy.getInstance(client.getApplication()) ;
-
-        Log.i(LOG_KEY,"Configured Braze + Rudder integration and initialized Braze.");
-
-
-
-        if (client.getApplication() != null) {
             client.getApplication().registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
                 @Override
-                public void onActivityCreated(Activity activity, Bundle bundle) {
-
+                public void onActivityCreated(@NonNull Activity activity, Bundle bundle) {
+                    // nothing to implement
                 }
 
                 @Override
-                public void onActivityStarted(Activity activity) {
-                    if(appBoy != null)
+                public void onActivityStarted(@NonNull Activity activity) {
+                    if (appBoy != null) {
                         appBoy.openSession(activity);
-
+                    }
                 }
 
                 @Override
-                public void onActivityResumed(Activity activity) {
+                public void onActivityResumed(@NonNull Activity activity) {
                     if (autoInAppMessageRegEnabled) {
                         AppboyInAppMessageManager.getInstance().registerInAppMessageManager(activity);
                     }
                 }
 
                 @Override
-                public void onActivityPaused(Activity activity) {
+                public void onActivityPaused(@NonNull Activity activity) {
                     if (autoInAppMessageRegEnabled) {
                         AppboyInAppMessageManager.getInstance().unregisterInAppMessageManager(activity);
                     }
                 }
 
                 @Override
-                public void onActivityStopped(Activity activity) {
-                    if(appBoy != null)
+                public void onActivityStopped(@NonNull Activity activity) {
+                    if (appBoy != null) {
                         appBoy.closeSession(activity);
-
+                    }
                 }
 
                 @Override
-                public void onActivitySaveInstanceState(Activity activity, Bundle bundle) {
-
+                public void onActivitySaveInstanceState(@NonNull Activity activity, @Nullable Bundle bundle) {
+                    // nothing to implement
                 }
 
                 @Override
-                public void onActivityDestroyed(Activity activity) {
-
+                public void onActivityDestroyed(@NonNull Activity activity) {
+                    // nothing to implement
                 }
             });
         }
@@ -181,38 +199,38 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
     private void processRudderEvent(RudderMessage element) {
         if (element.getType() != null) {
             switch (element.getType()) {
-                case MessageType.TRACK: 
-                    String event =  element.getEventName() ;
+                case MessageType.TRACK:
+                    String event = element.getEventName();
                     if (event == null) {
                         return;
                     }
                     Map<String, Object> eventProperties = element.getProperties();
                     try {
-                        if (element.getEventName().equals("Install Attributed")) {
+                        if (element.getEventName().equals("Install Attributed") && eventProperties != null && eventProperties.containsKey("campaign")) {
 
-                            Map<String, Object> campaignProps =  (Map<String, Object>)eventProperties.get("campaign");
+                            Map<String, Object> campaignProps = (Map<String, Object>) eventProperties.get("campaign");
 
-                            if (campaignProps != null) {
+                            if (campaignProps != null && appBoy.getCurrentUser() != null) {
                                 appBoy.getCurrentUser().setAttributionData(new AttributionData(
                                         (String) campaignProps.get("source"),
-                                        (String)campaignProps.get("name"),
+                                        (String) campaignProps.get("name"),
                                         (String) campaignProps.get("ad_group"),
                                         (String) campaignProps.get("ad_creative")));
                             }
                             return;
                         }
                     } catch (Exception exception) {
-                        Log.v(LOG_KEY, "Check the format of Install Attributed event . Caught "+ exception);
+                        RudderLogger.logError(exception);
                     }
                     if (eventProperties == null || eventProperties.size() == 0) {
-                        Log.v(LOG_KEY,"Braze event has no properties");
+                        RudderLogger.logDebug("Braze event has no properties");
                         appBoy.logCustomEvent(element.getEventName());
                         return;
                     }
-                    JSONObject propertiesJson = new JSONObject( eventProperties);
+                    JSONObject propertiesJson = new JSONObject(eventProperties);
 
 
-                    if (eventProperties.containsKey(REVENUE_KEY) ) {
+                    if (eventProperties.containsKey(REVENUE_KEY)) {
 
                         double revenue = Double.parseDouble(String.valueOf(eventProperties.get(REVENUE_KEY)));
 
@@ -223,17 +241,17 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                             propertiesJson.remove(REVENUE_KEY);
                             propertiesJson.remove(CURRENCY_KEY);
                             if (propertiesJson.length() == 0) {
-                                Log.v(LOG_KEY,"Braze logPurchase for purchase "+element.getEventName()+" for "+revenue+" "+ currencyCode+" with no"
-                                        + " properties." );
+                                RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " with no"
+                                        + " properties.");
                                 appBoy.logPurchase(element.getEventName(), currencyCode, new BigDecimal(revenue));
                             } else {
-                                Log.v(LOG_KEY,"Braze logPurchase for purchase "+element.getEventName()+" for "+revenue+" "+ currencyCode+" "+propertiesJson.toString());
+                                RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " " + propertiesJson.toString());
                                 appBoy.logPurchase(event, currencyCode, new BigDecimal(revenue),
                                         new AppboyProperties(propertiesJson));
                             }
                         }
-                    }else {
-                        Log.v(LOG_KEY,"Braze logCustomEvent for event "+element.getEventName()+" with properties % "+ propertiesJson.toString());
+                    } else {
+                        RudderLogger.logDebug("Braze logCustomEvent for event " + element.getEventName() + " with properties % " + propertiesJson.toString());
                         appBoy.logCustomEvent(event, new AppboyProperties(propertiesJson));
                     }
 
@@ -245,13 +263,16 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                         appBoy.changeUser(userId);
                     }
 
-                    Map<String,Object> traitsMap = element.getTraits();
+                    Map<String, Object> traitsMap = element.getTraits();
 
                     if (traitsMap == null) {
                         return;
                     }
 
-                    Date birthday =  dateFromString(RudderTraits.getBirthday(traitsMap));
+                    if (appBoy.getCurrentUser() == null) {
+                        return;
+                    }
+                    Date birthday = dateFromString(RudderTraits.getBirthday(traitsMap));
                     if (birthday != null) {
                         Calendar birthdayCal = Calendar.getInstance(Locale.US);
                         birthdayCal.setTime(birthday);
@@ -302,7 +323,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     }
 
                     for (String key : traitsMap.keySet()) {
-                        if (RESERVED_KEYSET.contains(key)) {
+                        if (RESERVED_KEY_SET.contains(key)) {
                             continue;
                         }
                         Object value = traitsMap.get(key);
@@ -322,17 +343,16 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                         } else if (value instanceof String) {
                             appBoy.getCurrentUser().setCustomUserAttribute(key, (String) value);
                         } else {
-                            Log.d(LOG_KEY,"Braze can't map rudder value for custom Braze user "
-                                    + "attribute with key "+  key + "and value "+value);
+                            RudderLogger.logDebug("Braze can't map rudder value for custom Braze user "
+                                    + "attribute with key " + key + "and value " + value);
                         }
                     }
-
                     break;
                 case MessageType.SCREEN:
-                    Log.w(LOG_KEY,"BrazeIntegrationFactory: MessageType is not supported");
+                    RudderLogger.logWarn("BrazeIntegrationFactory: MessageType is not supported");
                     break;
                 default:
-                    Log.w(LOG_KEY,"BrazeIntegrationFactory: MessageType is not specified");
+                    RudderLogger.logWarn("BrazeIntegrationFactory: MessageType is not specified");
                     break;
             }
         }
@@ -341,22 +361,20 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
     @Override
     public void flush() {
         super.flush();
-        Log.w(LOG_KEY," Braze requestImmediateDataFlush().");
+        RudderLogger.logDebug("Braze requestImmediateDataFlush().");
         appBoy.requestImmediateDataFlush();
     }
 
-
-     @Override
+    @Override
     public void reset() {
-        //this.adjust.resetSessionPartnerParameters();
+        // nothing to do here for Braze
     }
-
 
     @Override
     public void dump(@NonNull RudderMessage element) {
-
-        if(appBoy != null && element != null)
+        if (appBoy != null) {
             processRudderEvent(element);
+        }
     }
 
     @Override

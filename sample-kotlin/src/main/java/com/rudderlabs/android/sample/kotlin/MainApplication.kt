@@ -1,25 +1,31 @@
 package com.rudderlabs.android.sample.kotlin
 
 import android.app.Application
-import com.rudderlabs.android.integration.braze.BrazeIntegrationFactory
-import com.rudderlabs.android.sdk.core.RudderClient
-import com.rudderlabs.android.sdk.core.RudderConfig
-import com.rudderlabs.android.sdk.core.RudderLogger
+import com.rudderstack.android.integration.braze.BrazeIntegrationFactory
+import com.rudderstack.android.sdk.core.RudderClient
+import com.rudderstack.android.sdk.core.RudderConfig
+import com.rudderstack.android.sdk.core.RudderLogger
 
 class MainApplication : Application() {
     companion object {
         lateinit var rudderClient: RudderClient
+        const val WRITE_KEY = "1ZOVzjHRL0Vpk627qpkmcIYLrv3"
+        const val DATA_PLANE_URL = "https://6be9fce2.ngrok.io"
+        const val CONTROL_PLANE_URL = "https://6be9fce2.ngrok.io"
     }
 
     override fun onCreate() {
         super.onCreate()
         rudderClient = RudderClient.getInstance(
             this,
-            BuildConfig.WRITE_KEY,
+            WRITE_KEY,
             RudderConfig.Builder()
-                .withEndPointUri(BuildConfig.END_POINT_URL)
+                .withEndPointUri(DATA_PLANE_URL)
+                .withConfigPlaneUrl(CONTROL_PLANE_URL)
                 .withLogLevel(RudderLogger.RudderLogLevel.DEBUG)
                 .withFactory(BrazeIntegrationFactory.FACTORY)
+                .withTrackLifecycleEvents(true)
+                .withRecordScreenViews(true)
                 .build()
         )
     }
