@@ -20,8 +20,8 @@ class MainApplication : Application() {
             this,
             WRITE_KEY,
             RudderConfig.Builder()
-                .withEndPointUri(DATA_PLANE_URL)
-                .withConfigPlaneUrl(CONTROL_PLANE_URL)
+                .withDataPlaneUrl(DATA_PLANE_URL)
+                .withControlPlaneUrl(CONTROL_PLANE_URL)
                 .withLogLevel(RudderLogger.RudderLogLevel.DEBUG)
                 .withFactory(BrazeIntegrationFactory.FACTORY)
                 .withTrackLifecycleEvents(true)
