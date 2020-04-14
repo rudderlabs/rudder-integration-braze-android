@@ -29,9 +29,9 @@ implementation 'com.appboy:android-sdk-ui:6.0.+'
 ```
 val rudderClient: RudderClient = RudderClient.getInstance(
     this,
-    WRITE_KEY,
+    <WRITE_KEY>,
     RudderConfig.Builder()
-        .withDataPlaneUrl(END_POINT_URI)
+        .withDataPlaneUrl(<DATA_PLANE_URL>)
         .withLogLevel(RudderLogger.RudderLogLevel.DEBUG)
         .withFactory(BrazeIntegrationFactory.FACTORY)
         .build()
