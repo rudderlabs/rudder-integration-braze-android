@@ -11,7 +11,6 @@ class MainApplication : Application() {
         lateinit var rudderClient: RudderClient
         const val WRITE_KEY = "1ZOVzjHRL0Vpk627qpkmcIYLrv3"
         const val DATA_PLANE_URL = "https://6be9fce2.ngrok.io"
-        const val CONTROL_PLANE_URL = "https://6be9fce2.ngrok.io"
     }
 
     override fun onCreate() {
@@ -21,7 +20,6 @@ class MainApplication : Application() {
             WRITE_KEY,
             RudderConfig.Builder()
                 .withDataPlaneUrl(DATA_PLANE_URL)
-                .withControlPlaneUrl(CONTROL_PLANE_URL)
                 .withLogLevel(RudderLogger.RudderLogLevel.DEBUG)
                 .withFactory(BrazeIntegrationFactory.FACTORY)
                 .withTrackLifecycleEvents(true)

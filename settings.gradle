@@ -1,1 +1,1 @@
-include ':sample-kotlin', ':braze', ':core'
+include ':sample-kotlin', ':braze'

@@ -20,8 +20,8 @@ repositories {
 ```
 3. Add the dependency under ```dependencies```
 ```
-implementation 'com.rudderstack.android.sdk:core:1.0.1-beta.2'
-implementation 'com.rudderstack.android.integration:braze:0.1.0-beta.1'
+implementation 'com.rudderstack.android.sdk:core:1.0.1'
+implementation 'com.rudderstack.android.integration:braze:0.1.1'
 implementation 'com.appboy:android-sdk-ui:6.0.+'
 ```
 
