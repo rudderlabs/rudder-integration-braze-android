@@ -39,9 +39,10 @@ import java.util.Map;
 import java.util.Set;
 
 public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
-    private static final String APPBOY_KEY = "Braze";
+    private static final String BRAZE_KEY = "Braze";
+    private static final String BRAZE_EXTERNAL_ID_KEY = "brazeExternalId";
     private Appboy appBoy;
-    
+
     public static Factory FACTORY = new Factory() {
         @Override
         public RudderIntegration<?> create(Object settings, RudderClient client, RudderConfig rudderConfig) {
@@ -50,7 +51,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
 
         @Override
         public String key() {
-            return APPBOY_KEY;
+            return BRAZE_KEY;
         }
     };
 
@@ -93,23 +94,23 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
             if (destinationConfig.containsKey(AUTO_IN_APP_MESSAGE_REGISTER)) {
                 String autoInAppMessageRegEnabledStr = (String) destinationConfig.get(AUTO_IN_APP_MESSAGE_REGISTER);
                 if (autoInAppMessageRegEnabledStr != null) {
-                    autoInAppMessageRegEnabled = Boolean.getBoolean(autoInAppMessageRegEnabledStr);
+                    this.autoInAppMessageRegEnabled = Boolean.getBoolean(autoInAppMessageRegEnabledStr);
                 }
             }
 
             // get endpoint
-            String endPoint = "";
+            String endPoint = null, customEndPoint = null;
             if (destinationConfig.containsKey(DATA_CENTER_KEY)) {
                 endPoint = (String) destinationConfig.get(DATA_CENTER_KEY);
             }
 
-            if (TextUtils.isEmpty(endPoint)) {
+            if (endPoint == null || endPoint.isEmpty()) {
                 RudderLogger.logError("EndPointUrl is empty. Aborting Braze initialization.");
                 return;
+            } else {
+                endPoint = endPoint.trim();
             }
 
-            String customEndPoint = "";
-            endPoint = endPoint.trim();
             switch (endPoint) {
                 case "US-01":
                     customEndPoint = "sdk.iad-01.braze.com";
@@ -133,7 +134,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     customEndPoint = "sdk.fra-01.braze.eu";
                     break;
             }
-            if (customEndPoint.isEmpty()) {
+            if (customEndPoint == null) {
                 RudderLogger.logError("CustomEndPointUrl is blank or incorrect. Aborting Braze initialization.");
                 return;
             }
@@ -207,9 +208,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     Map<String, Object> eventProperties = element.getProperties();
                     try {
                         if (element.getEventName().equals("Install Attributed") && eventProperties != null && eventProperties.containsKey("campaign")) {
-
                             Map<String, Object> campaignProps = (Map<String, Object>) eventProperties.get("campaign");
-
                             if (campaignProps != null && appBoy.getCurrentUser() != null) {
                                 appBoy.getCurrentUser().setAttributionData(new AttributionData(
                                         (String) campaignProps.get("source"),
@@ -229,11 +228,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     }
                     JSONObject propertiesJson = new JSONObject(eventProperties);
 
-
                     if (eventProperties.containsKey(REVENUE_KEY)) {
-
                         double revenue = Double.parseDouble(String.valueOf(eventProperties.get(REVENUE_KEY)));
-
                         String currency = String.valueOf(eventProperties.get(CURRENCY_KEY));
                         if (revenue != 0) {
                             String currencyCode = TextUtils.isEmpty(currency) ? DEFAULT_CURRENCY_CODE
@@ -257,14 +253,26 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
 
                     break;
                 case MessageType.IDENTIFY:
+                    List<Map<String, Object>> externalIds = element.getContext().getExternalIds();
+                    String externalId = null;
+                    for (int index = 0; externalIds != null && index < externalIds.size(); index++) {
+                        Map<String, Object> externalIdMap = externalIds.get(index);
+                        String typeKey = (String) externalIdMap.get("type");
+                        if (typeKey != null && typeKey.equals(BRAZE_EXTERNAL_ID_KEY)) {
+                            externalId = (String) externalIdMap.get("id");
+                        }
+                    }
 
-                    String userId = element.getUserId();
-                    if (!TextUtils.isEmpty(userId)) {
-                        appBoy.changeUser(userId);
+                    if (externalId != null && !externalId.isEmpty()) {
+                        appBoy.changeUser(externalId);
+                    } else {
+                        String userId = element.getUserId();
+                        if (!TextUtils.isEmpty(userId)) {
+                            appBoy.changeUser(userId);
+                        }
                     }
 
                     Map<String, Object> traitsMap = element.getTraits();
-
                     if (traitsMap == null) {
                         return;
                     }
