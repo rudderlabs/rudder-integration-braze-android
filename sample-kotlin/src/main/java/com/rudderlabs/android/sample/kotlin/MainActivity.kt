@@ -21,21 +21,9 @@ class MainActivity : AppCompatActivity() {
         rudderClient.identify(
             "test_user_id",
             RudderTraits()
-                .putFirstName("First Name")
-                .putEmail("test@gmail.com"),
+                .putFirstName("First Name"),
             RudderOption()
-                .putExternalId("brazeExternalId", "some_external_id")
+                .putExternalId("brazeExternalId", "2d31d085-4d93-4126-b2b3-94e651810673")
         )
-
-
-        val traits = RudderTraits()
-        traits.putEmail("test_nana@gmail.com")
-        traits.putFirstName("test_nana")
-        traits.putPhone("9876543210")
-        val address = RudderTraits.Address()
-        address.putCity("city")
-        address.putCountry("KSA")
-        traits.putAddress(address)
-        rudderClient.identify("userModel.userId", traits, null)
     }
 }
