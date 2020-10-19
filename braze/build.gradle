@@ -20,7 +20,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 30
         versionCode 1
-        versionName '1.0.1'
+        versionName '1.0.2'
     }
 
     buildTypes {
@@ -42,7 +42,7 @@ dependencies {
     compileOnly 'com.rudderstack.android.sdk:core:1+'
     compileOnly 'com.google.code.gson:gson:2.8.6'
 
-    implementation 'com.appboy:android-sdk-ui:6.0.+'
+    implementation 'com.appboy:android-sdk-ui:10.0.+'
 
     testImplementation 'com.android.support.test:rules:1.0.2'
     testImplementation 'com.android.support.test:runner:1.0.2'
