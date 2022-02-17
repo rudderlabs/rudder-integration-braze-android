@@ -124,6 +124,9 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                 case "US-04":
                     customEndPoint = "sdk.iad-04.braze.com";
                     break;
+                case "US-05":
+                    customEndPoint = "sdk.iad-05.braze.com";
+                    break;
                 case "US-06":
                     customEndPoint = "sdk.iad-06.braze.com";
                     break;
