@@ -136,6 +136,9 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                 case "EU-01":
                     customEndPoint = "sdk.fra-01.braze.eu";
                     break;
+                case "EU-02":
+                    customEndPoint = "sdk.fra-02.braze.eu";
+                    break;
             }
             if (customEndPoint == null) {
                 RudderLogger.logError("CustomEndPointUrl is blank or incorrect. Aborting Braze initialization.");
