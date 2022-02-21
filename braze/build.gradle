@@ -32,7 +32,7 @@ repositories {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 
-    compileOnly 'com.rudderstack.android.sdk:core:1+'
+    compileOnly 'com.rudderstack.android.sdk:core:[1.0,)'
     compileOnly 'com.google.code.gson:gson:2.8.6'
 
     implementation 'com.appboy:android-sdk-ui:10.0.0'
