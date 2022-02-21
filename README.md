@@ -18,8 +18,7 @@ repositories {
 3. Add the dependency under ```dependencies```
 ```
 implementation 'com.rudderstack.android.sdk:core:[1.0,)'
-implementation 'com.rudderstack.android.integration:braze:1.0.4'
-implementation 'com.appboy:android-sdk-ui:10.0.0'
+implementation 'com.rudderstack.android.integration:braze:1.0.5'
 ```
 
 ## Initialize ```RudderClient```
