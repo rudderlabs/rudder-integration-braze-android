@@ -37,11 +37,6 @@ android {
     }
 }
 
-repositories {
-    maven { url "https://dl.bintray.com/rudderstack/rudderstack" }
-    maven { url "https://appboy.github.io/appboy-android-sdk/sdk" }
-}
-
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
