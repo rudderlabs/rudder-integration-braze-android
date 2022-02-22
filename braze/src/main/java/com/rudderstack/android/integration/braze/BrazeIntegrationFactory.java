@@ -181,7 +181,6 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                 @Override
                 public void onActivityPaused(@NonNull Activity activity) {
                     if (autoInAppMessageRegEnabled) {
-//                        AppboyInAppMessageManager.getInstance().unregisterInAppMessageManager(activity);
                         BrazeInAppMessageManager.getInstance().unregisterInAppMessageManager(activity);
                     }
                 }
