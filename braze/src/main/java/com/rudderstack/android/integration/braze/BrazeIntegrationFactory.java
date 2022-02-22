@@ -2,7 +2,6 @@ package com.rudderstack.android.integration.braze;
 
 import static com.rudderstack.android.integration.braze.Utils.dateFromString;
 import static com.rudderstack.android.integration.braze.Utils.getDouble;
-import static com.rudderstack.android.integration.braze.Utils.getInt;
 import static com.rudderstack.android.integration.braze.Utils.getRevenue;
 import static com.rudderstack.android.integration.braze.Utils.getString;
 import static com.rudderstack.android.integration.braze.Utils.isEmpty;
@@ -257,7 +256,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                         if (eventProperties.containsKey("products")) {
                                 handleProducts(eventProperties, currencyCode, propertiesJson);
                         } else {
-                                logPurchaseForSingleItem(element.getEventName(), currencyCode, BigDecimal.valueOf(revenue), 1, propertiesJson);
+                                logPurchaseForSingleItem(element.getEventName(), currencyCode, BigDecimal.valueOf(revenue), propertiesJson);
                         }
                     } else {
                         RudderLogger.logDebug("Braze logCustomEvent for event " + element.getEventName() + " with properties % " + propertiesJson.toString());
@@ -408,7 +407,6 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     JSONObject product = (JSONObject) products.get(i);
                     String productId = "";
                     double price = 0.0;
-                    int quantity = 1;
                     if (product.has("productId")) {
                         productId = getString(product.get("productId"));
                     } else if (product.has("product_id")) {
@@ -417,10 +415,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     if (product.has("price")) {
                         price = getDouble(product.get("price"));
                     }
-                    if (product.has("quantity")) {
-                        quantity = getInt(product.get("quantity"));
-                    }
-                    logPurchaseForSingleItem(productId, currencyCode, BigDecimal.valueOf(price), quantity, propertiesJson);
+                    logPurchaseForSingleItem(productId, currencyCode, BigDecimal.valueOf(price), propertiesJson);
                 } catch (JSONException e) {
                     RudderLogger.logDebug("Error while getting Products: " + products);
                 } catch (ClassCastException e) {
@@ -434,16 +429,15 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
     void logPurchaseForSingleItem(String productId,
                                   String currencyCode,
                                   BigDecimal price,
-                                  int quantity,
                                   @Nullable JSONObject propertiesJson) {
         if (propertiesJson == null || propertiesJson.length() == 0) {
             RudderLogger.logVerbose("Calling appboy.logPurchase for purchase " + productId + " for "
-                    + price + " "  + currencyCode + " for quantity " + quantity + " with no properties.");
-            appBoy.logPurchase(productId, currencyCode, price, quantity);
+                    + price + " " + currencyCode + " with no properties.");
+            appBoy.logPurchase(productId, currencyCode, price);
         } else {
             RudderLogger.logVerbose("Calling appboy.logPurchase for purchase " + productId + " for "
-                    + price + " " + currencyCode + " for quantity " + quantity + " with properties " + propertiesJson);
-            appBoy.logPurchase(productId, currencyCode, price, quantity, new BrazeProperties(propertiesJson));
+                    + price + " " + currencyCode + " with properties " + propertiesJson);
+            appBoy.logPurchase(productId, currencyCode, price, new BrazeProperties(propertiesJson));
         }
     }
 
@@ -470,9 +464,6 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                 }
                 if (product.containsKey("price")) {
                     productJsonObject.put("price", product.get("price"));
-                }
-                if (product.containsKey("quantity")) {
-                    productJsonObject.put("quantity", product.get("quantity"));
                 }
             } catch (JSONException e) {
                 RudderLogger.logDebug("Error while converting the Products value to JSONArray type");

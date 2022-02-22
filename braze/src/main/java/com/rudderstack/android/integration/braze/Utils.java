@@ -57,24 +57,6 @@ public class Utils {
         return 0;
     }
 
-    static int getInt(Object value) {
-        if (value == null) {
-            return 0;
-        }
-        if (value instanceof Number) {
-            return ((Number) value).intValue();
-        }
-        if (value instanceof String) {
-            try {
-                return Integer.parseInt((String) value);
-            } catch (NumberFormatException ignored) {
-                RudderLogger.logDebug("Unable to convert the value: " + value +
-                        " to Integer, using the defaultValue: " + 0);
-            }
-        }
-        return 0;
-    }
-
     static String getType(Object object) {
         if (object.getClass().isArray()) {
             return "Array";
