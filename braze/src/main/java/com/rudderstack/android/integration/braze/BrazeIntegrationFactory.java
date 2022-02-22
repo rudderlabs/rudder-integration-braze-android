@@ -246,14 +246,6 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                             propertiesJson.remove(REVENUE_KEY);
                             propertiesJson.remove(CURRENCY_KEY);
 
-//                            if (properties.products() != null) {
-//                                for (Properties.Product product : properties.products()) {
-//                                    logPurchaseForSingleItem(product.id(), currencyCode, BigDecimal.valueOf(product.price()), propertiesJson);
-//                                }
-//                            } else {
-//                                logPurchaseForSingleItem(event, currencyCode, BigDecimal.valueOf(revenue), propertiesJson);
-//                            }
-
                             if (propertiesJson.length() == 0) {
                                 RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " with no"
                                         + " properties.");
