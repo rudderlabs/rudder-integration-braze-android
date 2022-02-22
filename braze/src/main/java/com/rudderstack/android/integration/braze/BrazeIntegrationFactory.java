@@ -10,13 +10,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.appboy.Appboy;
-import com.appboy.configuration.AppboyConfig;
+import com.braze.configuration.BrazeConfig;
 import com.appboy.enums.Gender;
 import com.appboy.enums.Month;
-import com.appboy.models.outgoing.AppboyProperties;
+import com.braze.models.outgoing.BrazeProperties;
 import com.appboy.models.outgoing.AttributionData;
-import com.appboy.support.AppboyLogger;
-import com.appboy.ui.inappmessage.AppboyInAppMessageManager;
+import com.braze.support.BrazeLogger;
+import com.braze.ui.inappmessage.BrazeInAppMessageManager;
 import com.rudderstack.android.sdk.core.MessageType;
 import com.rudderstack.android.sdk.core.RudderClient;
 import com.rudderstack.android.sdk.core.RudderConfig;
@@ -146,17 +146,19 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
             }
 
             // all good. initialize braze sdk
-            AppboyConfig.Builder builder = new AppboyConfig.Builder().setApiKey(apiKey);
-            builder.setCustomEndpoint(customEndPoint);
-            AppboyLogger.setLogLevel(
+            BrazeConfig.Builder builder =
+                    new BrazeConfig.Builder()
+                            .setApiKey(apiKey)
+                            .setCustomEndpoint(customEndPoint);
+            BrazeLogger.setLogLevel(
                     rudderConfig.getLogLevel() >= RudderLogger.RudderLogLevel.DEBUG ?
                             Log.VERBOSE : Log.ERROR
             );
-            Appboy.configure(client.getApplication().getApplicationContext(), builder.build());
-            this.appBoy = Appboy.getInstance(client.getApplication());
+            Appboy.configure(RudderClient.getApplication().getApplicationContext(), builder.build());
+            this.appBoy = Appboy.getInstance(RudderClient.getApplication());
             RudderLogger.logInfo("Configured Braze + Rudder integration and initialized Braze.");
 
-            client.getApplication().registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+            RudderClient.getApplication().registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
                 @Override
                 public void onActivityCreated(@NonNull Activity activity, Bundle bundle) {
                     // nothing to implement
@@ -172,14 +174,14 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                 @Override
                 public void onActivityResumed(@NonNull Activity activity) {
                     if (autoInAppMessageRegEnabled) {
-                        AppboyInAppMessageManager.getInstance().registerInAppMessageManager(activity);
+                        BrazeInAppMessageManager.getInstance().registerInAppMessageManager(activity);
                     }
                 }
 
                 @Override
                 public void onActivityPaused(@NonNull Activity activity) {
                     if (autoInAppMessageRegEnabled) {
-                        AppboyInAppMessageManager.getInstance().unregisterInAppMessageManager(activity);
+                        BrazeInAppMessageManager.getInstance().unregisterInAppMessageManager(activity);
                     }
                 }
 
@@ -242,6 +244,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                                     : currency;
                             propertiesJson.remove(REVENUE_KEY);
                             propertiesJson.remove(CURRENCY_KEY);
+
                             if (propertiesJson.length() == 0) {
                                 RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " with no"
                                         + " properties.");
@@ -249,12 +252,12 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                             } else {
                                 RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " " + propertiesJson.toString());
                                 appBoy.logPurchase(event, currencyCode, new BigDecimal(revenue),
-                                        new AppboyProperties(propertiesJson));
+                                        new BrazeProperties(propertiesJson));
                             }
                         }
                     } else {
                         RudderLogger.logDebug("Braze logCustomEvent for event " + element.getEventName() + " with properties % " + propertiesJson.toString());
-                        appBoy.logCustomEvent(event, new AppboyProperties(propertiesJson));
+                        appBoy.logCustomEvent(event, new BrazeProperties(propertiesJson));
                     }
 
                     break;
