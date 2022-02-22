@@ -405,15 +405,17 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
             for (int i = 0; i < products.length(); i++) {
                 try {
                     JSONObject product = (JSONObject) products.get(i);
-                    String product_id = "";
+                    String productId = "";
                     double price = 0.0;
-                    if (product.has("product_id")) {
-                        product_id = getString(product.get("product_id"));
+                    if (product.has("productId")) {
+                        productId = getString(product.get("productId"));
+                    } else if (product.has("product_id")) {
+                        productId = getString(product.get("product_id"));
                     }
                     if (product.has("price")) {
                         price = getDouble(product.get("price"));
                     }
-                    logPurchaseForSingleItem(product_id, currencyCode, BigDecimal.valueOf(price), propertiesJson);
+                    logPurchaseForSingleItem(productId, currencyCode, BigDecimal.valueOf(price), propertiesJson);
                 } catch (JSONException e) {
                     RudderLogger.logDebug("Error while getting Products: " + products);
                 } catch (ClassCastException e) {
@@ -457,6 +459,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
             try {
                 if (product.containsKey("product_id")) {
                     productJsonObject.put("product_id", product.get("product_id"));
+                } else if (product.containsKey("productId")) {
+                    productJsonObject.put("productId", product.get("productId"));
                 }
                 if (product.containsKey("price")) {
                     productJsonObject.put("price", product.get("price"));
