@@ -1,5 +1,11 @@
 package com.rudderstack.android.integration.braze;
 
+import static com.rudderstack.android.integration.braze.Utils.dateFromString;
+import static com.rudderstack.android.integration.braze.Utils.getDouble;
+import static com.rudderstack.android.integration.braze.Utils.getRevenue;
+import static com.rudderstack.android.integration.braze.Utils.getString;
+import static com.rudderstack.android.integration.braze.Utils.isEmpty;
+
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
@@ -25,14 +31,18 @@ import com.rudderstack.android.sdk.core.RudderLogger;
 import com.rudderstack.android.sdk.core.RudderMessage;
 import com.rudderstack.android.sdk.core.RudderTraits;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -181,7 +191,6 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                 @Override
                 public void onActivityPaused(@NonNull Activity activity) {
                     if (autoInAppMessageRegEnabled) {
-//                        AppboyInAppMessageManager.getInstance().unregisterInAppMessageManager(activity);
                         BrazeInAppMessageManager.getInstance().unregisterInAppMessageManager(activity);
                     }
                 }
@@ -236,33 +245,18 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                         return;
                     }
                     JSONObject propertiesJson = new JSONObject(eventProperties);
+                    double revenue = getRevenue(eventProperties, REVENUE_KEY);
+                    if (revenue != 0 || event.equals("Order Completed")) {
+                        String currency = getString(eventProperties.get(CURRENCY_KEY));
+                        String currencyCode = TextUtils.isEmpty(currency) ? DEFAULT_CURRENCY_CODE
+                                : currency;
+                        propertiesJson.remove(REVENUE_KEY);
+                        propertiesJson.remove(CURRENCY_KEY);
 
-                    if (eventProperties.containsKey(REVENUE_KEY)) {
-                        double revenue = Double.parseDouble(String.valueOf(eventProperties.get(REVENUE_KEY)));
-                        String currency = String.valueOf(eventProperties.get(CURRENCY_KEY));
-                        if (revenue != 0 || event.equals("Order Completed") || event.equals("Completed Order")) {
-                            String currencyCode = TextUtils.isEmpty(currency) ? DEFAULT_CURRENCY_CODE
-                                    : currency;
-                            propertiesJson.remove(REVENUE_KEY);
-                            propertiesJson.remove(CURRENCY_KEY);
-
-//                            if (properties.products() != null) {
-//                                for (Properties.Product product : properties.products()) {
-//                                    logPurchaseForSingleItem(product.id(), currencyCode, BigDecimal.valueOf(product.price()), propertiesJson);
-//                                }
-//                            } else {
-//                                logPurchaseForSingleItem(event, currencyCode, BigDecimal.valueOf(revenue), propertiesJson);
-//                            }
-
-                            if (propertiesJson.length() == 0) {
-                                RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " with no"
-                                        + " properties.");
-                                appBoy.logPurchase(element.getEventName(), currencyCode, new BigDecimal(revenue));
-                            } else {
-                                RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " " + propertiesJson.toString());
-                                appBoy.logPurchase(event, currencyCode, new BigDecimal(revenue),
-                                        new BrazeProperties(propertiesJson));
-                            }
+                        if (eventProperties.containsKey("products")) {
+                                handleProducts(eventProperties, currencyCode, propertiesJson);
+                        } else {
+                                logPurchaseForSingleItem(element.getEventName(), currencyCode, BigDecimal.valueOf(revenue), propertiesJson);
                         }
                     } else {
                         RudderLogger.logDebug("Braze logCustomEvent for event " + element.getEventName() + " with properties % " + propertiesJson.toString());
@@ -275,9 +269,9 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     String externalId = null;
                     for (int index = 0; externalIds != null && index < externalIds.size(); index++) {
                         Map<String, Object> externalIdMap = externalIds.get(index);
-                        String typeKey = (String) externalIdMap.get("type");
+                        String typeKey = getString(externalIdMap.get("type"));
                         if (typeKey != null && typeKey.equals(BRAZE_EXTERNAL_ID_KEY)) {
-                            externalId = (String) externalIdMap.get("id");
+                            externalId = getString(externalIdMap.get("id"));
                         }
                     }
 
@@ -374,9 +368,6 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                         }
                     }
                     break;
-                case MessageType.SCREEN:
-                    RudderLogger.logWarn("BrazeIntegrationFactory: MessageType is not supported");
-                    break;
                 default:
                     RudderLogger.logWarn("BrazeIntegrationFactory: MessageType is not specified");
                     break;
@@ -408,12 +399,82 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
         return appBoy;
     }
 
-    private static Date dateFromString(String date) {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        try {
-            return formatter.parse(date);
-        } catch (Exception e) {
+    private void handleProducts(Map<String, Object> properties, String currencyCode, JSONObject propertiesJson) {
+        JSONArray products = getProductsJSONArray(properties.get("products"));
+        if (!isEmpty(products)) {
+            for (int i = 0; i < products.length(); i++) {
+                try {
+                    JSONObject product = (JSONObject) products.get(i);
+                    String product_id = "";
+                    double price = 0.0;
+                    if (product.has("product_id")) {
+                        product_id = getString(product.get("product_id"));
+                    }
+                    if (product.has("price")) {
+                        price = getDouble(product.get("price"));
+                    }
+                    logPurchaseForSingleItem(product_id, currencyCode, BigDecimal.valueOf(price), propertiesJson);
+                } catch (JSONException e) {
+                    RudderLogger.logDebug("Error while getting Products: " + products);
+                } catch (ClassCastException e) {
+                    // If products contains list of null value
+                    RudderLogger.logDebug("Error while getting Products: " + products);
+                }
+            }
+        }
+    }
+
+    void logPurchaseForSingleItem(String productId,
+                                  String currencyCode,
+                                  BigDecimal price,
+                                  @Nullable JSONObject propertiesJson) {
+        if (propertiesJson == null || propertiesJson.length() == 0) {
+            RudderLogger.logVerbose("Calling appboy.logPurchase for purchase " + productId + " for "
+                    + price + " " + currencyCode + " with no properties.");
+            appBoy.logPurchase(productId, currencyCode, price);
+        } else {
+            RudderLogger.logVerbose("Calling appboy.logPurchase for purchase " + productId + " for "
+                    + price + " " + currencyCode + " with properties " + propertiesJson);
+            appBoy.logPurchase(productId, currencyCode, price, new BrazeProperties(propertiesJson));
+        }
+    }
+
+    // Handle product object of type ArrayList, JSONObject and LinkedHashMap
+    private JSONArray getProductsJSONArray(Object object) {
+        if (object == null) {
             return null;
         }
+        if (object instanceof JSONArray) {
+            return (JSONArray) object;
+        }
+        if (object instanceof List){
+            ArrayList<Object> arrayList = new ArrayList<>((Collection<?>) object);
+            return new JSONArray(arrayList);
+        }
+        if (object instanceof LinkedHashMap) {
+            LinkedHashMap product = (LinkedHashMap) object;
+            JSONObject productJsonObject = new JSONObject();
+            try {
+                if (product.containsKey("product_id")) {
+                    productJsonObject.put("product_id", product.get("product_id"));
+                }
+                if (product.containsKey("price")) {
+                    productJsonObject.put("price", product.get("price"));
+                }
+            } catch (JSONException e) {
+                RudderLogger.logDebug("Error while converting the Products value to JSONArray type");
+            }
+
+            if (!isEmpty(productJsonObject)) {
+                return new JSONArray().put(productJsonObject);
+            }
+            return null;
+        }
+        try {
+            return new JSONArray((ArrayList) object);
+        } catch (Exception e) {
+            RudderLogger.logDebug("Error while converting the products: "+ object +" to JSONArray type");
+        }
+        return null;
     }
 }
