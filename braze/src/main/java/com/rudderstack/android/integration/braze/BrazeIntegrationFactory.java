@@ -239,7 +239,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     if (eventProperties.containsKey(REVENUE_KEY)) {
                         double revenue = Double.parseDouble(String.valueOf(eventProperties.get(REVENUE_KEY)));
                         String currency = String.valueOf(eventProperties.get(CURRENCY_KEY));
-                        if (revenue != 0) {
+                        if (revenue >= 0) {
                             String currencyCode = TextUtils.isEmpty(currency) ? DEFAULT_CURRENCY_CODE
                                     : currency;
                             propertiesJson.remove(REVENUE_KEY);
