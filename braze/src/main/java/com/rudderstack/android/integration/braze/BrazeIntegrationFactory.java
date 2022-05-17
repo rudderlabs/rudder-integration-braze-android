@@ -236,24 +236,22 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     }
                     JSONObject propertiesJson = new JSONObject(eventProperties);
 
-                    if (eventProperties.containsKey(REVENUE_KEY)) {
+                    if (eventProperties.containsKey(REVENUE_KEY) && eventProperties.get(REVENUE_KEY) != null) {
                         double revenue = Double.parseDouble(String.valueOf(eventProperties.get(REVENUE_KEY)));
                         String currency = String.valueOf(eventProperties.get(CURRENCY_KEY));
-                        if (revenue >= 0) {
-                            String currencyCode = TextUtils.isEmpty(currency) ? DEFAULT_CURRENCY_CODE
-                                    : currency;
-                            propertiesJson.remove(REVENUE_KEY);
-                            propertiesJson.remove(CURRENCY_KEY);
+                        String currencyCode = TextUtils.isEmpty(currency) ? DEFAULT_CURRENCY_CODE
+                                : currency;
+                        propertiesJson.remove(REVENUE_KEY);
+                        propertiesJson.remove(CURRENCY_KEY);
 
-                            if (propertiesJson.length() == 0) {
-                                RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " with no"
-                                        + " properties.");
-                                appBoy.logPurchase(element.getEventName(), currencyCode, new BigDecimal(revenue));
-                            } else {
-                                RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " " + propertiesJson.toString());
-                                appBoy.logPurchase(event, currencyCode, new BigDecimal(revenue),
-                                        new BrazeProperties(propertiesJson));
-                            }
+                        if (propertiesJson.length() == 0) {
+                            RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " with no"
+                                    + " properties.");
+                            appBoy.logPurchase(element.getEventName(), currencyCode, new BigDecimal(revenue));
+                        } else {
+                            RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " " + propertiesJson.toString());
+                            appBoy.logPurchase(event, currencyCode, new BigDecimal(revenue),
+                                    new BrazeProperties(propertiesJson));
                         }
                     } else {
                         RudderLogger.logDebug("Braze logCustomEvent for event " + element.getEventName() + " with properties % " + propertiesJson.toString());
