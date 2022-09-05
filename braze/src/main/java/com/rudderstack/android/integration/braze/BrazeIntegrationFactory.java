@@ -9,7 +9,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.appboy.Appboy;
+import com.braze.Braze;
 import com.braze.configuration.BrazeConfig;
 import com.appboy.enums.Gender;
 import com.appboy.enums.Month;
@@ -38,10 +38,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
+public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private static final String BRAZE_KEY = "Braze";
     private static final String BRAZE_EXTERNAL_ID_KEY = "brazeExternalId";
-    private Appboy appBoy;
+    private Braze appBoy;
 
     public static Factory FACTORY = new Factory() {
         @Override
@@ -78,7 +78,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
         Map<String, Object> destinationConfig = (Map<String, Object>) config;
         if (destinationConfig == null) {
             RudderLogger.logError("Invalid api key. Aborting Braze initialization.");
-        } else if (client.getApplication() == null) {
+        } else if (RudderClient.getApplication() == null) {
             RudderLogger.logError("RudderClient is not initialized correctly. Application is null. Aborting Braze initialization.");
         } else {
             // get apiKey and return if null or blank
@@ -154,8 +154,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     rudderConfig.getLogLevel() >= RudderLogger.RudderLogLevel.DEBUG ?
                             Log.VERBOSE : Log.ERROR
             );
-            Appboy.configure(RudderClient.getApplication().getApplicationContext(), builder.build());
-            this.appBoy = Appboy.getInstance(RudderClient.getApplication());
+            Braze.configure(RudderClient.getApplication().getApplicationContext(), builder.build());
+            this.appBoy = Braze.getInstance(RudderClient.getApplication());
             RudderLogger.logInfo("Configured Braze + Rudder integration and initialized Braze.");
 
             RudderClient.getApplication().registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
@@ -393,7 +393,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
     }
 
     @Override
-    public Appboy getUnderlyingInstance() {
+    public Braze getUnderlyingInstance() {
         return appBoy;
     }
 
