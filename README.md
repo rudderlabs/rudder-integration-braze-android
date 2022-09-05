@@ -8,17 +8,26 @@ More information on RudderStack can be found [here](https://github.com/rudderlab
 
 1. Add [Braze](https://www.braze.com) as a destination in the [Dashboard](https://app.rudderstack.com/) and define ```apiToken```
 
-2. Add these lines to your ```app/build.gradle```
+2. Add these lines to your top-level project ``` build.gradle```
 ```
-repositories {
-  maven { url "https://dl.bintray.com/rudderstack/rudderstack" }
-  maven { url "https://appboy.github.io/appboy-android-sdk/sdk" }
+allprojects {
+  repositories {
+    google()
+    maven { url "https://appboy.github.io/appboy-android-sdk/sdk" }
+  }
 }
 ```
+
 3. Add the dependency under ```dependencies```
 ```
-implementation 'com.rudderstack.android.sdk:core:[1.0,)'
-implementation 'com.rudderstack.android.integration:braze:1.0.6'
+implementation 'com.rudderstack.android.sdk:core:[1.0,2.0)'
+implementation 'com.rudderstack.android.integration:braze:1.0.7'
+```
+
+4. Add required permissions to ```AndroidManifest.xml```
+```
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 ```
 
 ## Initialize ```RudderClient```
