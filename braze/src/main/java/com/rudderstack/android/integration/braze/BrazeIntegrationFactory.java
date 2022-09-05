@@ -9,7 +9,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.appboy.Appboy;
+import com.braze.Braze;
 import com.braze.configuration.BrazeConfig;
 import com.appboy.enums.Gender;
 import com.appboy.enums.Month;
@@ -38,10 +38,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
+public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private static final String BRAZE_KEY = "Braze";
     private static final String BRAZE_EXTERNAL_ID_KEY = "brazeExternalId";
-    private Appboy appBoy;
+    private Braze braze;
 
     public static Factory FACTORY = new Factory() {
         @Override
@@ -78,7 +78,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
         Map<String, Object> destinationConfig = (Map<String, Object>) config;
         if (destinationConfig == null) {
             RudderLogger.logError("Invalid api key. Aborting Braze initialization.");
-        } else if (client.getApplication() == null) {
+        } else if (RudderClient.getApplication() == null) {
             RudderLogger.logError("RudderClient is not initialized correctly. Application is null. Aborting Braze initialization.");
         } else {
             // get apiKey and return if null or blank
@@ -154,8 +154,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     rudderConfig.getLogLevel() >= RudderLogger.RudderLogLevel.DEBUG ?
                             Log.VERBOSE : Log.ERROR
             );
-            Appboy.configure(RudderClient.getApplication().getApplicationContext(), builder.build());
-            this.appBoy = Appboy.getInstance(RudderClient.getApplication());
+            Braze.configure(RudderClient.getApplication().getApplicationContext(), builder.build());
+            this.braze = Braze.getInstance(RudderClient.getApplication());
             RudderLogger.logInfo("Configured Braze + Rudder integration and initialized Braze.");
 
             RudderClient.getApplication().registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
@@ -166,8 +166,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
 
                 @Override
                 public void onActivityStarted(@NonNull Activity activity) {
-                    if (appBoy != null) {
-                        appBoy.openSession(activity);
+                    if (braze != null) {
+                        braze.openSession(activity);
                     }
                 }
 
@@ -187,8 +187,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
 
                 @Override
                 public void onActivityStopped(@NonNull Activity activity) {
-                    if (appBoy != null) {
-                        appBoy.closeSession(activity);
+                    if (braze != null) {
+                        braze.closeSession(activity);
                     }
                 }
 
@@ -217,8 +217,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     try {
                         if (element.getEventName().equals("Install Attributed") && eventProperties != null && eventProperties.containsKey("campaign")) {
                             Map<String, Object> campaignProps = (Map<String, Object>) eventProperties.get("campaign");
-                            if (campaignProps != null && appBoy.getCurrentUser() != null) {
-                                appBoy.getCurrentUser().setAttributionData(new AttributionData(
+                            if (campaignProps != null && braze.getCurrentUser() != null) {
+                                braze.getCurrentUser().setAttributionData(new AttributionData(
                                         (String) campaignProps.get("source"),
                                         (String) campaignProps.get("name"),
                                         (String) campaignProps.get("ad_group"),
@@ -231,7 +231,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     }
                     if (eventProperties == null || eventProperties.size() == 0) {
                         RudderLogger.logDebug("Braze event has no properties");
-                        appBoy.logCustomEvent(element.getEventName());
+                        braze.logCustomEvent(element.getEventName());
                         return;
                     }
                     JSONObject propertiesJson = new JSONObject(eventProperties);
@@ -247,15 +247,15 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                         if (propertiesJson.length() == 0) {
                             RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " with no"
                                     + " properties.");
-                            appBoy.logPurchase(element.getEventName(), currencyCode, new BigDecimal(revenue));
+                            braze.logPurchase(element.getEventName(), currencyCode, new BigDecimal(revenue));
                         } else {
                             RudderLogger.logDebug("Braze logPurchase for purchase " + element.getEventName() + " for " + revenue + " " + currencyCode + " " + propertiesJson.toString());
-                            appBoy.logPurchase(event, currencyCode, new BigDecimal(revenue),
+                            braze.logPurchase(event, currencyCode, new BigDecimal(revenue),
                                     new BrazeProperties(propertiesJson));
                         }
                     } else {
                         RudderLogger.logDebug("Braze logCustomEvent for event " + element.getEventName() + " with properties % " + propertiesJson.toString());
-                        appBoy.logCustomEvent(event, new BrazeProperties(propertiesJson));
+                        braze.logCustomEvent(event, new BrazeProperties(propertiesJson));
                     }
 
                     break;
@@ -271,11 +271,11 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                     }
 
                     if (externalId != null && !externalId.isEmpty()) {
-                        appBoy.changeUser(externalId);
+                        braze.changeUser(externalId);
                     } else {
                         String userId = element.getUserId();
                         if (!TextUtils.isEmpty(userId)) {
-                            appBoy.changeUser(userId);
+                            braze.changeUser(userId);
                         }
                     }
 
@@ -284,56 +284,56 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                         return;
                     }
 
-                    if (appBoy.getCurrentUser() == null) {
+                    if (braze.getCurrentUser() == null) {
                         return;
                     }
                     Date birthday = dateFromString(RudderTraits.getBirthday(traitsMap));
                     if (birthday != null) {
                         Calendar birthdayCal = Calendar.getInstance(Locale.US);
                         birthdayCal.setTime(birthday);
-                        appBoy.getCurrentUser().setDateOfBirth(birthdayCal.get(Calendar.YEAR),
+                        braze.getCurrentUser().setDateOfBirth(birthdayCal.get(Calendar.YEAR),
                                 Month.values()[birthdayCal.get(Calendar.MONTH)],
                                 birthdayCal.get(Calendar.DAY_OF_MONTH));
                     }
 
                     String email = RudderTraits.getEmail(traitsMap);
                     if (!TextUtils.isEmpty(email)) {
-                        appBoy.getCurrentUser().setEmail(email);
+                        braze.getCurrentUser().setEmail(email);
                     }
 
                     String firstName = RudderTraits.getFirstname(traitsMap);
                     if (!TextUtils.isEmpty(firstName)) {
-                        appBoy.getCurrentUser().setFirstName(firstName);
+                        braze.getCurrentUser().setFirstName(firstName);
                     }
 
                     String lastName = RudderTraits.getLastname(traitsMap);
                     if (!TextUtils.isEmpty(lastName)) {
-                        appBoy.getCurrentUser().setLastName(lastName);
+                        braze.getCurrentUser().setLastName(lastName);
                     }
 
                     String gender = RudderTraits.getGender(traitsMap);
                     if (!TextUtils.isEmpty(gender)) {
                         if (MALE_KEYS.contains(gender.toUpperCase())) {
-                            appBoy.getCurrentUser().setGender(Gender.MALE);
+                            braze.getCurrentUser().setGender(Gender.MALE);
                         } else if (FEMALE_KEYS.contains(gender.toUpperCase())) {
-                            appBoy.getCurrentUser().setGender(Gender.FEMALE);
+                            braze.getCurrentUser().setGender(Gender.FEMALE);
                         }
                     }
 
                     String phone = RudderTraits.getPhone(traitsMap);
                     if (!TextUtils.isEmpty(phone)) {
-                        appBoy.getCurrentUser().setPhoneNumber(phone);
+                        braze.getCurrentUser().setPhoneNumber(phone);
                     }
 
                     RudderTraits.Address address = RudderTraits.Address.fromString(RudderTraits.getAddress(traitsMap));
                     if (address != null) {
                         String city = address.getCity();
                         if (!TextUtils.isEmpty(city)) {
-                            appBoy.getCurrentUser().setHomeCity(city);
+                            braze.getCurrentUser().setHomeCity(city);
                         }
                         String country = address.getCountry();
                         if (!TextUtils.isEmpty(country)) {
-                            appBoy.getCurrentUser().setCountry(country);
+                            braze.getCurrentUser().setCountry(country);
                         }
                     }
 
@@ -343,20 +343,20 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
                         }
                         Object value = traitsMap.get(key);
                         if (value instanceof Boolean) {
-                            appBoy.getCurrentUser().setCustomUserAttribute(key, (Boolean) value);
+                            braze.getCurrentUser().setCustomUserAttribute(key, (Boolean) value);
                         } else if (value instanceof Integer) {
-                            appBoy.getCurrentUser().setCustomUserAttribute(key, (Integer) value);
+                            braze.getCurrentUser().setCustomUserAttribute(key, (Integer) value);
                         } else if (value instanceof Double) {
-                            appBoy.getCurrentUser().setCustomUserAttribute(key, (Double) value);
+                            braze.getCurrentUser().setCustomUserAttribute(key, (Double) value);
                         } else if (value instanceof Float) {
-                            appBoy.getCurrentUser().setCustomUserAttribute(key, (Float) value);
+                            braze.getCurrentUser().setCustomUserAttribute(key, (Float) value);
                         } else if (value instanceof Long) {
-                            appBoy.getCurrentUser().setCustomUserAttribute(key, (Long) value);
+                            braze.getCurrentUser().setCustomUserAttribute(key, (Long) value);
                         } else if (value instanceof Date) {
                             long secondsFromEpoch = ((Date) value).getTime() / 1000L;
-                            appBoy.getCurrentUser().setCustomUserAttributeToSecondsFromEpoch(key, secondsFromEpoch);
+                            braze.getCurrentUser().setCustomUserAttributeToSecondsFromEpoch(key, secondsFromEpoch);
                         } else if (value instanceof String) {
-                            appBoy.getCurrentUser().setCustomUserAttribute(key, (String) value);
+                            braze.getCurrentUser().setCustomUserAttribute(key, (String) value);
                         } else {
                             RudderLogger.logDebug("Braze can't map rudder value for custom Braze user "
                                     + "attribute with key " + key + "and value " + value);
@@ -377,7 +377,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
     public void flush() {
         super.flush();
         RudderLogger.logDebug("Braze requestImmediateDataFlush().");
-        appBoy.requestImmediateDataFlush();
+        braze.requestImmediateDataFlush();
     }
 
     @Override
@@ -387,14 +387,14 @@ public class BrazeIntegrationFactory extends RudderIntegration<Appboy> {
 
     @Override
     public void dump(@NonNull RudderMessage element) {
-        if (appBoy != null) {
+        if (braze != null) {
             processRudderEvent(element);
         }
     }
 
     @Override
-    public Appboy getUnderlyingInstance() {
-        return appBoy;
+    public Braze getUnderlyingInstance() {
+        return braze;
     }
 
     private static Date dateFromString(String date) {
