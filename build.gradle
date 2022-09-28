@@ -1,11 +1,11 @@
 buildscript {
     repositories {
+        mavenCentral()
         google()
-        jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.0'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.10"
+        classpath 'com.android.tools.build:gradle:7.3.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.20"
     }
 }
 
@@ -15,8 +15,8 @@ plugins {
 
 allprojects {
     repositories {
+        mavenCentral()
         google()
-        jcenter()
         maven { url "https://appboy.github.io/appboy-android-sdk/sdk" }
     }
 }
