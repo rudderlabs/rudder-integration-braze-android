@@ -30,8 +30,6 @@ jobs:
       # Calculate the next release version based on conventional semantic release
       - name: Create release branch
         id: create-release
-        env:
-          HUSKY: 0
         run: |
           source_branch_name=${GITHUB_REF##*/}
           release_type=release
@@ -40,7 +38,8 @@ jobs:
           git merge origin/master
           current_version=$(cat gradle.properties | grep "VERSION_NAME" | cut -d'=' -f2)
           
-          npm run release -- --skip.commit --skip.tag --skip.changelog
+          npm ci
+           npx standard-version --skip.commit --skip.tag --skip.changelog
           new_version=$(cat gradle.properties | grep "VERSION_NAME" | cut -d'=' -f2)
           git reset --hard
 
@@ -59,16 +58,14 @@ jobs:
           echo "::set-output name=new_version::$new_version"
 
       - name: Update changelog & bump version
-        env:
-          HUSKY: 0
+        id: finish-release
         run: |
-          npm i -g conventional-changelog-cli
-          SUMMARY=$(((npx conventional-changelog -u) 2>&1) | sed "s/*/<br> */g" | sed "s/#/ /g" | tr -d '\n' || true)
-          echo $SUMMARY
-          echo "::set-output name=commit_summary::$SUMMARY"
-          npm run release
+          npm ci
+          npx standard-version
+          git add . && git commit --amend --no-edit
 
       - name: Push new version in release branch & tag
+        
         run: |
           git push --follow-tags
 
@@ -76,8 +73,8 @@ jobs:
         uses: repo-sync/pull-request@v2
         with:
           source_branch: ${{ steps.create-release.outputs.branch_name }}
-          destination_branch: 'main'
+          destination_branch: 'master'
           github_token: ${{ secrets.PAT }}
-          pr_title: "chore(release): pulling ${{ steps.create-release.outputs.branch_name }} into main"
-          pr_body: ":crown: *An automated PR*\n\n${{ steps.finish-release.outputs.commit_summary }}"
+          pr_title: "chore(release): pulling ${{ steps.create-release.outputs.branch_name }} into ${{ steps.create-release.outputs.main_branch }}"
+          pr_body:  ":crown: *An automated PR*"
           pr_reviewer: 'itsdebs'
