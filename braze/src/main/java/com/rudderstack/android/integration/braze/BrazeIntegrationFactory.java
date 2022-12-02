@@ -261,10 +261,10 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
 
             if (propertiesJson.length() == 0) {
                 RudderLogger.logDebug(String.format("Braze logPurchase for purchase %s for %s %s with no properties.", element.getEventName(), revenue, currencyCode));
-                this.braze.logPurchase(element.getEventName(), currencyCode, new BigDecimal(revenue));
+                this.braze.logPurchase(element.getEventName(), currencyCode, BigDecimal.valueOf(revenue));
             } else {
                 RudderLogger.logDebug(String.format("Braze logPurchase for purchase %s for %s %s %s", element.getEventName(), revenue, currencyCode, propertiesJson.toString()));
-                this.braze.logPurchase(event, currencyCode, new BigDecimal(revenue),
+                this.braze.logPurchase(event, currencyCode, BigDecimal.valueOf(revenue),
                         new BrazeProperties(propertiesJson));
             }
         } else {
@@ -427,6 +427,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
                         break;
                 }
             }
+        } else {
+            RudderLogger.logWarn("BrazeIntegrationFactory: Braze is not initialized");
         }
     }
 
@@ -449,16 +451,17 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     }
 
     // compare two address objects and return accordingly
-    private static boolean compareAddress(RudderTraits.Address curr, RudderTraits.Address prev) {
+    private static boolean compareAddress(@Nullable RudderTraits.Address curr, @Nullable RudderTraits.Address prev) {
         if (prev == null && curr != null) {
             return true;
         }
 
-        return prev != null && prev.getCity().equals(curr.getCity())
-                && prev.getCountry().equals(prev.getCountry())
-                && prev.getPostalCode().equals(prev.getPostalCode())
-                && prev.getState().equals(prev.getState())
-                && prev.getStreet().equals(prev.getStreet());
+        return prev != null && curr != null
+                && prev.getCity().equals(curr.getCity())
+                && prev.getCountry().equals(curr.getCountry())
+                && prev.getPostalCode().equals(curr.getPostalCode())
+                && prev.getState().equals(curr.getState())
+                && prev.getStreet().equals(curr.getStreet());
     }
 
     private @Nullable
