@@ -452,7 +452,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
 
     // compare two address objects and return false if there is a change in address or true otherwise
     private static boolean compareAddress(@Nullable RudderTraits.Address curr, @Nullable RudderTraits.Address prev) {
-        if (prev == null & curr != null) {
+        if (prev == null && curr != null) {
             return false;
         }
         if (prev != null && curr != null) {
