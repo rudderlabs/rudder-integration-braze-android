@@ -55,8 +55,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             "MALE"));
     private static final Set<String> FEMALE_KEYS = new HashSet<>(Arrays.asList("F",
             "FEMALE"));
-    private static final List<String> RESERVED_KEY_SET = Arrays.asList("birthday", "email", "firstName",
-            "lastName", "gender", "phone", "address");
+    private static final List<String> RESERVED_KEY_SET = Arrays.asList("birthday", "email", "firstname",
+            "lastname", "gender", "phone", "address");
 
     // Braze instance
     private Braze braze;
@@ -450,18 +450,32 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
         }
     }
 
-    // compare two address objects and return accordingly
+    // compare two address objects and return false if there is a change in address or true otherwise
     private static boolean compareAddress(@Nullable RudderTraits.Address curr, @Nullable RudderTraits.Address prev) {
-        if (prev == null && curr != null) {
-            return true;
+        if (prev == null & curr != null) {
+            return false;
         }
+        if (prev != null && curr != null) {
+            // if previous identify call doesn't contain city but current one do
+            if (prev.getCity() == null && curr.getCity() != null) {
+                return false;
+            }
+            if (prev.getCity() != null && curr.getCity() != null)
+                if (!(prev.getCity().equals(curr.getCity()))) {
+                    return false;
+                }
 
-        return prev != null && curr != null
-                && prev.getCity().equals(curr.getCity())
-                && prev.getCountry().equals(curr.getCountry())
-                && prev.getPostalCode().equals(curr.getPostalCode())
-                && prev.getState().equals(curr.getState())
-                && prev.getStreet().equals(curr.getStreet());
+            // if previous identify call doesn't contain country but current one do
+            if (prev.getCountry() == null && curr.getCountry() != null) {
+                return false;
+            }
+            if (prev.getCountry() != null && curr.getCountry() != null)
+                if (!(prev.getCountry().equals(curr.getCountry()))) {
+                    return false;
+                }
+        }
+        // all other case, doesn't require any update
+        return true;
     }
 
     private @Nullable
