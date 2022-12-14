@@ -41,7 +41,7 @@ public class SimpleTestCases extends BaseTestCase {
     public void testSimpleTrackEvent() throws InterruptedException {
         // track event
         try {
-            RudderElement pageViewEvent = new RudderMessageBuilder()
+            RudderMessage pageViewEvent = new RudderMessageBuilder()
                     .setEventName("Test Track")
                     .setProperty(new TrackPropertyBuilder()
                             .setCategory("Test Category")
@@ -51,7 +51,7 @@ public class SimpleTestCases extends BaseTestCase {
             rudderClient.track(pageViewEvent);
             rudderClient.flush();
             Thread.sleep(2000);
-        } catch (RudderException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -60,20 +60,15 @@ public class SimpleTestCases extends BaseTestCase {
     public void testSimplePageViewEvent() throws InterruptedException {
         // page view event
         try {
-            RudderElement pageViewEvent = new RudderMessageBuilder()
-                    .setProperty(new PagePropertyBuilder()
-                            .setUrl("http://jsonviewer.stack.hu")
-                            .setKeywords("Test")
-                            .setPath("http://jsonviewer.stack.hu")
-                            .setReferrer("Test Event")
-                            .setTitle("Test Title")
-                            .setSearch("Test"))
+            RudderMessage pageViewEvent = new RudderMessageBuilder()
+                    .setProperty(new RudderProperty()
+                            .putValue("money", "dollar"))
                     .build();
 
-            rudderClient.page(pageViewEvent);
+            rudderClient.screen(pageViewEvent);
             rudderClient.flush();
             Thread.sleep(2000);
-        } catch (RudderException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -83,14 +78,14 @@ public class SimpleTestCases extends BaseTestCase {
     public void testSimpleScreenViewEvent() throws InterruptedException {
         // screen view event
         try {
-            RudderElement screenViewEvent = new RudderMessageBuilder()
+            RudderMessage screenViewEvent = new RudderMessageBuilder()
                     .setProperty(new ScreenPropertyBuilder()
                             .setScreenName("Test Screen"))
                     .build();
             rudderClient.screen(screenViewEvent);
             rudderClient.flush();
             Thread.sleep(2000);
-        } catch (RudderException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

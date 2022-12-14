@@ -8,13 +8,14 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
-import com.braze.Braze;
-import com.braze.configuration.BrazeConfig;
 import com.appboy.enums.Gender;
 import com.appboy.enums.Month;
-import com.braze.models.outgoing.BrazeProperties;
 import com.appboy.models.outgoing.AttributionData;
+import com.braze.Braze;
+import com.braze.configuration.BrazeConfig;
+import com.braze.models.outgoing.BrazeProperties;
 import com.braze.support.BrazeLogger;
 import com.braze.ui.inappmessage.BrazeInAppMessageManager;
 import com.rudderstack.android.sdk.core.MessageType;
@@ -451,31 +452,16 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     }
 
     // compare two address objects and return false if there is a change in address or true otherwise
-    private static boolean compareAddress(@Nullable RudderTraits.Address curr, @Nullable RudderTraits.Address prev) {
-        if (prev == null && curr != null) {
-            return false;
-        }
-        if (prev != null && curr != null) {
-            // if previous identify call doesn't contain city but current one do
-            if (prev.getCity() == null && curr.getCity() != null) {
-                return false;
-            }
-            if (prev.getCity() != null && curr.getCity() != null)
-                if (!(prev.getCity().equals(curr.getCity()))) {
-                    return false;
-                }
+    @VisibleForTesting
+    static boolean compareAddress(@Nullable RudderTraits.Address curr, @Nullable RudderTraits.Address prev) {
+        return
+                (prev != null && curr != null)
+                        && ((curr.getCity() == null || (
+                        prev.getCity() != null && !(prev.getCity().equals(curr.getCity()))
+                )) || (curr.getCountry() == null || (
+                        prev.getCountry() != null && !(prev.getCountry().equals(curr.getCountry()))
+                ))) || (curr == null);
 
-            // if previous identify call doesn't contain country but current one do
-            if (prev.getCountry() == null && curr.getCountry() != null) {
-                return false;
-            }
-            if (prev.getCountry() != null && curr.getCountry() != null)
-                if (!(prev.getCountry().equals(curr.getCountry()))) {
-                    return false;
-                }
-        }
-        // all other case, doesn't require any update
-        return true;
     }
 
     private @Nullable
