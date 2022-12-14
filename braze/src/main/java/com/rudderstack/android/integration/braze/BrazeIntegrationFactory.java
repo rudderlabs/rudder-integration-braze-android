@@ -454,13 +454,15 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     // compare two address objects and return false if there is a change in address or true otherwise
     @VisibleForTesting
     static boolean compareAddress(@Nullable RudderTraits.Address curr, @Nullable RudderTraits.Address prev) {
-        return
-                (prev != null && curr != null)
-                        && ((curr.getCity() == null || (
-                        prev.getCity() != null && !(prev.getCity().equals(curr.getCity()))
-                )) || (curr.getCountry() == null || (
-                        prev.getCountry() != null && !(prev.getCountry().equals(curr.getCountry()))
-                ))) || (curr == null);
+        return (curr == null) || // if current address is null, we consider address unchanged
+                (prev != null)  // current is non-null, if previous is null will return false
+                        && ((curr.getCity() == null || ( // current city is null, consider city unchanged
+                        prev.getCity() != null && //current city not null previous city if null, address changed
+                                (prev.getCity().equals(curr.getCity())) // match the cities
+                )) && (curr.getCountry() == null || ( // current country is null, consider city unchanged
+                        prev.getCountry() != null && //current country not null previous country if null, address changed
+                                (prev.getCountry().equals(curr.getCountry())) // match the cities
+                )));
 
     }
 
