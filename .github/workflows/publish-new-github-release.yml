@@ -2,8 +2,7 @@ name: Publish new github release
 
 on:
   pull_request:
-    branches:
-      - master
+    branches: ['master']
     types:
       - closed
 
@@ -29,8 +28,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version: 16
 
       - name: Create Github Release
         id: create_release

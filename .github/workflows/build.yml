@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ 'master' ]
   pull_request:
     branches: [ 'master' ]
     types: [ 'opened', 'reopened', 'edited', 'synchronize' ]
@@ -36,10 +36,10 @@ jobs:
             ${{ runner.os }}-gradle-core-
       - name: Run Tests
         run: ./gradlew braze:test
-      - name: Generate coverage report
-        run: ./gradlew braze:codeCoverageReport
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+#      - name: Generate coverage report
+#        run: ./gradlew braze:codeCoverageReport
+#      - name: Upload coverage to Codecov
+#        uses: codecov/codecov-action@v2
 
 #  android-test:
 #    needs: cancel_previous

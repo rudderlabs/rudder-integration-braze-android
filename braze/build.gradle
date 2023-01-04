@@ -17,6 +17,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 
@@ -41,4 +45,6 @@ ext {
     PUBLISH_ARTIFACT_ID = 'braze'
 }
 
-apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"
+
+apply from: rootProject.file('gradle/mvn-publish.gradle')
+apply from: rootProject.file('gradle/codecov.gradle')
