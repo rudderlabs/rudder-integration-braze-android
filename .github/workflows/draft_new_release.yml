@@ -69,12 +69,12 @@ jobs:
         run: |
           git push --follow-tags
 
-      - name: Create pull request into main
+      - name: Create pull request into master
         uses: repo-sync/pull-request@v2
         with:
           source_branch: ${{ steps.create-release.outputs.branch_name }}
           destination_branch: 'master'
           github_token: ${{ secrets.PAT }}
-          pr_title: "chore(release): pulling ${{ steps.create-release.outputs.branch_name }} into ${{ steps.create-release.outputs.main_branch }}"
+          pr_title: "chore(release): pulling ${{ steps.create-release.outputs.branch_name }} into master"
           pr_body:  ":crown: *An automated PR*"
           pr_reviewer: 'itsdebs'
