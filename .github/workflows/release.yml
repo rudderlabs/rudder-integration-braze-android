@@ -9,10 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: deployment
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout source branch
+        uses: actions/checkout@v3
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
       - name: cache gradle dependencies
         uses: actions/cache@v2
         with:
@@ -22,6 +24,7 @@ jobs:
           key: ${{ runner.os }}-gradle-core-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-core-
+
       - name: Publish release to sonatype
         run: ./gradlew publishToSonatype -Prelease closeAndReleaseSonatypeStagingRepository
         env:
