@@ -9,8 +9,8 @@ import com.rudderstack.android.sdk.core.RudderLogger
 class MainApplication : Application() {
     companion object {
         lateinit var rudderClient: RudderClient
-        const val WRITE_KEY = "1ZOVzjHRL0Vpk627qpkmcIYLrv3"
-        const val DATA_PLANE_URL = "https://0a662b88eb52.ngrok.io"
+        const val WRITE_KEY = "1xXCubSHWXbpBI2h6EpCjKOsxmQ"
+        const val DATA_PLANE_URL = "https://rudderstacgwyx.dataplane.rudderstack.com"
     }
 
     override fun onCreate() {
@@ -20,7 +20,7 @@ class MainApplication : Application() {
             WRITE_KEY,
             RudderConfig.Builder()
                 .withDataPlaneUrl(DATA_PLANE_URL)
-                .withLogLevel(RudderLogger.RudderLogLevel.DEBUG)
+                .withLogLevel(RudderLogger.RudderLogLevel.VERBOSE)
                 .withFactory(BrazeIntegrationFactory.FACTORY)
                 .withTrackLifecycleEvents(true)
                 .withRecordScreenViews(true)
