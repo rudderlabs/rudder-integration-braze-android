@@ -1,14 +1,12 @@
-
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
 
     defaultConfig {
-        minSdkVersion 16
-        targetSdkVersion 30
-        versionCode 1
-        versionName '1.0.7'
+        minSdkVersion 19
+        targetSdkVersion 31
+        buildConfigField("String", "VERSION_NAME", "\"${VERSION_NAME}\"")
     }
 
     buildTypes {
@@ -17,6 +15,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    namespace 'com.rudderstack.android.integration.braze'
 }
 
 
@@ -32,13 +35,12 @@ dependencies {
     testImplementation 'com.android.support.test:rules:1.0.2'
     testImplementation 'com.android.support.test:runner:1.0.2'
     testImplementation "org.robolectric:robolectric:4.3"
-    testImplementation "androidx.test:core-ktx:1.3.0"
+    testImplementation "androidx.test:core-ktx:1.5.0"
+    testImplementation "org.hamcrest:hamcrest:2.2"
 }
 
-ext {
-    PUBLISH_GROUP_ID = 'com.rudderstack.android.integration'
-    PUBLISH_VERSION = '1.0.7'
-    PUBLISH_ARTIFACT_ID = 'braze'
-}
 
-apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"
+
+
+apply from: rootProject.file('gradle/mvn-publish.gradle')
+apply from: rootProject.file('gradle/codecov.gradle')
