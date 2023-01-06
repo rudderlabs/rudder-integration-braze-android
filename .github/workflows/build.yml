@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ 'master' ]
   pull_request:
     branches: [ 'master' ]
     types: [ 'opened', 'reopened', 'edited', 'synchronize' ]
@@ -17,14 +17,17 @@ jobs:
         with:
           workflow_id: ${{ github.event.workflow.id }}
 
-  rudder-integration-braze-android-test:
+  braze-test:
     needs: cancel_previous
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout source branch
+        uses: actions/checkout@v3
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
       - name: cache gradle dependencies
         uses: actions/cache@v2
         with:
@@ -34,10 +37,13 @@ jobs:
           key: ${{ runner.os }}-gradle-core-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-core-
+
       - name: Run Tests
-        run: ./gradlew rudder-integration-braze-android:test
+        run: ./gradlew braze:test
+
       - name: Generate coverage report
-        run: ./gradlew rudder-integration-braze-android:codeCoverageReport
+        run: ./gradlew braze:codeCoverageReport
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
 
