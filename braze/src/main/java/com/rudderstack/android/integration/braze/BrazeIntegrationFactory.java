@@ -163,10 +163,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
 
             // check for support dedup for identify calls. default false
             if (destinationConfig.containsKey(SUPPORT_DEDUP)) {
-                String supportDedupStr = (String) destinationConfig.get(SUPPORT_DEDUP);
-                if (supportDedupStr != null) {
-                    this.supportDedup = Boolean.getBoolean(supportDedupStr);
-                }
+                this.supportDedup = getBoolean(destinationConfig.get(SUPPORT_DEDUP));
             }
 
             // all good. initialize braze sdk
@@ -526,5 +523,18 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
         }
 
         return currValue;
+    }
+
+    private static boolean getBoolean(Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof Boolean) {
+            return (boolean) value;
+        }
+        if (value instanceof String) {
+            return Boolean.parseBoolean((String) value);
+        }
+        return false;
     }
 }
