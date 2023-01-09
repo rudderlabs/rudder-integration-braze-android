@@ -445,7 +445,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     //////////////////////////////////////////////////
     // UTIL Methods
     //////////////////////////////////////////////////
-    private static Date dateFromString(@Nullable String date) {
+    private static @Nullable Date dateFromString(@Nullable String date) {
         if (date == null) {
             return null;
         }
