@@ -445,12 +445,15 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     //////////////////////////////////////////////////
     // UTIL Methods
     //////////////////////////////////////////////////
-    private static Date dateFromString(String date) {
+    private static Date dateFromString(@Nullable String date) {
+        if (date == null) {
+            return null;
+        }
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         try {
             return formatter.parse(date);
         } catch (Exception e) {
-            RudderLogger.logError(e);
+            RudderLogger.logError("Error while converting String type value into Date format: " + e);
             return null;
         }
     }
