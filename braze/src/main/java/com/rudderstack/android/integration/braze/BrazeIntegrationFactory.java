@@ -10,9 +10,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import com.appboy.enums.Gender;
-import com.appboy.enums.Month;
-import com.appboy.models.outgoing.AttributionData;
+import com.braze.enums.Gender;
+import com.braze.enums.Month;
+import com.braze.models.outgoing.AttributionData;
 import com.braze.Braze;
 import com.braze.configuration.BrazeConfig;
 import com.braze.models.outgoing.BrazeProperties;
@@ -28,28 +28,92 @@ import com.rudderstack.android.sdk.core.RudderTraits;
 
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
+    class BrazePurchase {
+        private String productId;
+        private Integer quantity;
+        private Double price;
+        private Map<String, Object> properties;
+        private String currency;
+
+        public String getProductId() {
+            return productId;
+        }
+
+        public Integer getQuantity() {
+            return quantity;
+        }
+
+        public Double getPrice() {
+            return price;
+        }
+
+        public Map<String, Object> getProperties() {
+            return properties;
+        }
+
+        public String getCurrency() {
+            return currency;
+        }
+
+        public void setProductId(String productId) {
+            this.productId = productId;
+        }
+
+        public void setQuantity(Integer quantity) {
+            this.quantity = quantity;
+        }
+
+        public void setPrice(Double price) {
+            this.price = price;
+        }
+
+        public void setProperties(Map<String, Object> properties) {
+            this.properties = properties;
+        }
+
+        public void setCurrency(String currency) {
+            this.currency = currency;
+        }
+
+        public BrazePurchase() {
+            this.quantity = 1;
+            this.properties = new HashMap<>();
+            this.currency = "USD";
+        }
+    }
     // String constants
     private static final String BRAZE_KEY = "Braze";
     private static final String BRAZE_EXTERNAL_ID_KEY = "brazeExternalId";
     private static final String AUTO_IN_APP_MESSAGE_REGISTER = "auto_in_app_message_register";
     private static final String DEFAULT_CURRENCY_CODE = "USD";
-    private static final String REVENUE_KEY = "revenue";
     private static final String CURRENCY_KEY = "currency";
+    private static final String PRODUCTS_KEY = "products";
     private static final String DATA_CENTER_KEY = "dataCenter";
     private static final String API_KEY = "appKey";
     private static final String SUPPORT_DEDUP = "supportDedup";
+    private static final String PRODUCT_ID_KEY = "product_id";
+    private static final String QUANTITY_KEY = "quantity";
+    private static final String PRICE_KEY = "price";
+    private static final String TIME_KEY = "time";
+    private static final String EVENT_NAME_KEY = "event_name";
 
     // Array constants
     private static final Set<String> MALE_KEYS = new HashSet<>(Arrays.asList("M",
@@ -234,48 +298,92 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
 
         Map<String, Object> eventProperties = element.getProperties();
         try {
-            if (element.getEventName().equals("Install Attributed") && eventProperties != null && eventProperties.containsKey("campaign")) {
-                Map<String, Object> campaignProps = (Map<String, Object>) eventProperties.get("campaign");
-                if (campaignProps != null && this.braze.getCurrentUser() != null) {
-                    this.braze.getCurrentUser().setAttributionData(new AttributionData(
-                            (String) campaignProps.get("source"),
-                            (String) campaignProps.get("name"),
-                            (String) campaignProps.get("ad_group"),
-                            (String) campaignProps.get("ad_creative")));
+            if (event.equals("Install Attributed")) {
+                if (eventProperties != null && eventProperties.containsKey("campaign") && this.braze.getCurrentUser() != null) {
+                    Map<String, Object> campaignProps = (Map<String, Object>) eventProperties.get("campaign");
+                    if (campaignProps != null) {
+                        this.braze.getCurrentUser().setAttributionData(new AttributionData(
+                                (String) campaignProps.get("source"),
+                                (String) campaignProps.get("name"),
+                                (String) campaignProps.get("ad_group"),
+                                (String) campaignProps.get("ad_creative")));
+                    }
+                } else {
+                    logCustomEvent(event, eventProperties);
                 }
-                return;
+            } else if (event.equals("Order Completed")) {
+                List<BrazePurchase> purchaseList = getPurchaseList(eventProperties);
+                if (purchaseList != null) {
+                    for (BrazePurchase purchase: purchaseList) {
+                        this.braze.logPurchase(purchase.getProductId(), purchase.getCurrency(),
+                                BigDecimal.valueOf(purchase.getPrice()), new BrazeProperties(purchase.properties));
+                        RudderLogger.logDebug(String.format("Braze logPurchase for purchase %s for %s %s %s", purchase.getProductId(),
+                                purchase.getPrice(), purchase.getCurrency(), purchase.properties.toString()));
+                    }
+                }
+            } else {
+                logCustomEvent(event, eventProperties);
             }
         } catch (Exception exception) {
             RudderLogger.logError(exception);
         }
+    }
 
-        if (eventProperties == null || eventProperties.size() == 0) {
-            RudderLogger.logDebug("Braze event has no properties");
-            this.braze.logCustomEvent(element.getEventName());
-            return;
-        }
-
-        JSONObject propertiesJson = new JSONObject(eventProperties);
-        if (eventProperties.containsKey(REVENUE_KEY) && eventProperties.get(REVENUE_KEY) != null) {
-            double revenue = Double.parseDouble(String.valueOf(eventProperties.get(REVENUE_KEY)));
-            String currency = String.valueOf(eventProperties.get(CURRENCY_KEY));
-            String currencyCode = TextUtils.isEmpty(currency) ? DEFAULT_CURRENCY_CODE
-                    : currency;
-            propertiesJson.remove(REVENUE_KEY);
-            propertiesJson.remove(CURRENCY_KEY);
-
-            if (propertiesJson.length() == 0) {
-                RudderLogger.logDebug(String.format("Braze logPurchase for purchase %s for %s %s with no properties.", element.getEventName(), revenue, currencyCode));
-                this.braze.logPurchase(element.getEventName(), currencyCode, BigDecimal.valueOf(revenue));
-            } else {
-                RudderLogger.logDebug(String.format("Braze logPurchase for purchase %s for %s %s %s", element.getEventName(), revenue, currencyCode, propertiesJson.toString()));
-                this.braze.logPurchase(event, currencyCode, BigDecimal.valueOf(revenue),
-                        new BrazeProperties(propertiesJson));
-            }
+    private void logCustomEvent(String eventName, Map<String, Object> eventProperties) {
+        if (eventProperties != null) {
+            RudderLogger.logDebug(String.format("Braze logCustomEvent for event %s with properties %% %s", eventName, eventProperties.toString()));
+            this.braze.logCustomEvent(eventName, new BrazeProperties(eventProperties));
         } else {
-            RudderLogger.logDebug(String.format("Braze logCustomEvent for event %s with properties %% %s", element.getEventName(), propertiesJson.toString()));
-            this.braze.logCustomEvent(event, new BrazeProperties(propertiesJson));
+            RudderLogger.logDebug(String.format("Braze logCustomEvent for event %s", eventName));
+            this.braze.logCustomEvent(eventName);
         }
+    }
+
+    @Nullable
+    private List<BrazePurchase> getPurchaseList(Map<String, Object> properties) {
+        if (properties == null) {
+            return null;
+        }
+        List<Map<String, Object>> productList = (List<Map<String, Object>>)properties.get(PRODUCTS_KEY);
+        if (productList == null || productList.size() == 0) {
+            return null;
+        }
+
+        String currencyCode = String.valueOf(properties.get(CURRENCY_KEY));
+        String currency = TextUtils.isEmpty(currencyCode) ? DEFAULT_CURRENCY_CODE : currencyCode;
+        List<String> ignoredKeys = Arrays.asList(PRODUCTS_KEY, QUANTITY_KEY, PRICE_KEY, PRODUCTS_KEY,
+                TIME_KEY, EVENT_NAME_KEY, CURRENCY_KEY);
+        Map<String, Object> otherProperties = new HashMap<>();
+        for (Map.Entry<String, Object> entry: properties.entrySet()) {
+            if (!ignoredKeys.contains(entry.getKey())){
+                otherProperties.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        List<BrazePurchase> purchaseList = new ArrayList<>();
+
+        for (Map<String, Object> product: productList) {
+            BrazePurchase brazePurchase = new BrazePurchase();
+            Map<String, Object> appboyProperties = new HashMap<>(otherProperties);
+            for (Map.Entry<String, Object> entry: product.entrySet()) {
+                if (entry.getKey().equals(PRODUCT_ID_KEY)) {
+                    brazePurchase.setProductId(String.valueOf(entry.getValue()));
+                } else if (entry.getKey().equals(QUANTITY_KEY)) {
+                    brazePurchase.setQuantity(Integer.getInteger(String.valueOf(entry.getValue())));
+                } else if (entry.getKey().equals(PRICE_KEY)) {
+                    brazePurchase.setPrice(Double.parseDouble(String.valueOf(entry.getValue())));
+                } else {
+                    appboyProperties.put(entry.getKey(), entry.getValue());
+                }
+            }
+            brazePurchase.setProperties(appboyProperties);
+            brazePurchase.setCurrency(currency);
+            if (brazePurchase.productId == null || brazePurchase.price == null) {
+                continue;
+            }
+            purchaseList.add(brazePurchase);
+        }
+        return purchaseList.size() > 0 ? purchaseList : null;
     }
 
     private void processIdentifyEvent(RudderMessage element) {
@@ -423,9 +531,6 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
                         break;
                     case MessageType.IDENTIFY:
                         processIdentifyEvent(element);
-                        break;
-                    case MessageType.SCREEN:
-                        RudderLogger.logWarn("BrazeIntegrationFactory: MessageType is not supported");
                         break;
                     default:
                         RudderLogger.logWarn("BrazeIntegrationFactory: MessageType is not specified");
