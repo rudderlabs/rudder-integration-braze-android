@@ -27,7 +27,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 
     // RudderStack SDK
-    compileOnly 'com.rudderstack.android.sdk:core:[1.12,2.0)'
+    implementation 'com.rudderstack.android.sdk:core:[1.12,2.0)'
     // Braze SDK
     compileOnly 'com.appboy:android-sdk-ui:[24.3,25.0)'
 
