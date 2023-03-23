@@ -27,9 +27,9 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 
     // RudderStack SDK
-    implementation 'com.rudderstack.android.sdk:core:[1.12,2.0)'
+    compileOnly 'com.rudderstack.android.sdk:core:[1.12,2.0)'
     // Braze SDK
-    compileOnly 'com.appboy:android-sdk-ui:[24.3,25.0)'
+    implementation 'com.appboy:android-sdk-ui:[24.3,25.0)'
 
     implementation 'com.google.code.gson:gson:2.8.9'
     testImplementation 'com.android.support.test:rules:1.0.2'
@@ -37,6 +37,7 @@ dependencies {
     testImplementation "org.robolectric:robolectric:4.3"
     testImplementation "androidx.test:core-ktx:1.5.0"
     testImplementation "org.hamcrest:hamcrest:2.2"
+    testImplementation 'com.rudderstack.android.sdk:core:[1.12,2.0)'
 }
 
 
