@@ -10,9 +10,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import com.braze.enums.Gender;
-import com.braze.enums.Month;
-import com.braze.models.outgoing.AttributionData;
+import com.appboy.enums.Gender;
+import com.appboy.enums.Month;
+import com.appboy.models.outgoing.AttributionData;
 import com.braze.Braze;
 import com.braze.configuration.BrazeConfig;
 import com.braze.models.outgoing.BrazeProperties;
