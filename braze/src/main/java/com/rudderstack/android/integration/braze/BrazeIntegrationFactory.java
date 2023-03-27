@@ -108,6 +108,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private static final String PRICE_KEY = "price";
     private static final String TIME_KEY = "time";
     private static final String EVENT_NAME_KEY = "event_name";
+    private static final String USE_NATIVE_SDK_TO_SEND = "useNativeSDKToSend";
 
     // Array constants
     private static final Set<String> MALE_KEYS = new HashSet<>(Arrays.asList("M",
@@ -130,6 +131,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     // Config variables
     private boolean autoInAppMessageRegEnabled;
     private boolean supportDedup = false; // default it to false
+    private boolean sendEvents = false; // default it to false
 
     // Previous identify payload
     private RudderMessage previousIdentifyElement = null;
@@ -222,6 +224,11 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             // check for support dedup for identify calls. default false
             if (destinationConfig.containsKey(SUPPORT_DEDUP)) {
                 this.supportDedup = getBoolean(destinationConfig.get(SUPPORT_DEDUP));
+            }
+
+            // check for support useNativeSDKToSend. default false
+            if (destinationConfig.containsKey(USE_NATIVE_SDK_TO_SEND)) {
+                this.sendEvents = getBoolean(destinationConfig.get(USE_NATIVE_SDK_TO_SEND));
             }
 
             // all good. initialize braze sdk
@@ -518,6 +525,9 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     @Override
     public void dump(@NonNull RudderMessage element) {
         if (braze != null) {
+            if (!sendEvents) {
+                return;
+            }
             if (element.getType() != null) {
                 switch (element.getType()) {
                     case MessageType.TRACK:
