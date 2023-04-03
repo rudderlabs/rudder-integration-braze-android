@@ -10,9 +10,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import com.appboy.enums.Gender;
-import com.appboy.enums.Month;
-import com.appboy.models.outgoing.AttributionData;
+import com.braze.enums.Gender;
+import com.braze.enums.Month;
+import com.braze.models.outgoing.AttributionData;
 import com.braze.Braze;
 import com.braze.configuration.BrazeConfig;
 import com.braze.models.outgoing.BrazeProperties;
@@ -93,6 +93,13 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             this.currency = "USD";
         }
     }
+
+    enum ConnectionMode {
+        HYBRID,
+        CLOUD,
+        DEVICE
+    }
+
     // String constants
     private static final String BRAZE_KEY = "Braze";
     private static final String BRAZE_EXTERNAL_ID_KEY = "brazeExternalId";
@@ -109,6 +116,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private static final String TIME_KEY = "time";
     private static final String EVENT_NAME_KEY = "event_name";
     private static final String USE_NATIVE_SDK_TO_SEND = "useNativeSDKToSend";
+    private static final String CONNECTION_MODE = "connectionMode";
 
     // Array constants
     private static final Set<String> MALE_KEYS = new HashSet<>(Arrays.asList("M",
@@ -131,7 +139,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     // Config variables
     private boolean autoInAppMessageRegEnabled;
     private boolean supportDedup = false; // default it to false
-    private boolean sendEvents = false; // default it to false
+    private ConnectionMode connectionMode;
 
     // Previous identify payload
     private RudderMessage previousIdentifyElement = null;
@@ -226,10 +234,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
                 this.supportDedup = getBoolean(destinationConfig.get(SUPPORT_DEDUP));
             }
 
-            // check for support useNativeSDKToSend. default false
-            if (destinationConfig.containsKey(USE_NATIVE_SDK_TO_SEND)) {
-                this.sendEvents = getBoolean(destinationConfig.get(USE_NATIVE_SDK_TO_SEND));
-            }
+            this.connectionMode = getConnectionMode(destinationConfig);
 
             // all good. initialize braze sdk
             BrazeConfig.Builder builder =
@@ -525,7 +530,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     @Override
     public void dump(@NonNull RudderMessage element) {
         if (braze != null) {
-            if (!sendEvents) {
+            if (connectionMode != ConnectionMode.DEVICE) {
                 return;
             }
             if (element.getType() != null) {
@@ -648,5 +653,24 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             return Boolean.parseBoolean((String) value);
         }
         return false;
+    }
+
+    private ConnectionMode getConnectionMode(Map<String, Object> config) {
+        String connectionMode = (config.containsKey(CONNECTION_MODE)) ? (String)config.get(CONNECTION_MODE) : null;
+        if (connectionMode == null) {
+            if (config.containsKey(USE_NATIVE_SDK_TO_SEND) && getBoolean(config.get(USE_NATIVE_SDK_TO_SEND))) {
+                return ConnectionMode.DEVICE;
+            } else {
+                return  ConnectionMode.CLOUD;
+            }
+        } else {
+            if (connectionMode.equals("cloud")) {
+                return ConnectionMode.CLOUD;
+            } else if (connectionMode.equals("device")) {
+                return ConnectionMode.DEVICE;
+            } else {
+                return ConnectionMode.HYBRID;
+            }
+        }
     }
 }
