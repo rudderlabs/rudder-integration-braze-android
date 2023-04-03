@@ -665,12 +665,12 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             }
         } else {
             switch (connectionMode) {
-                case "cloud":
-                    return ConnectionMode.CLOUD;
+                case "hybrid":
+                    return ConnectionMode.HYBRID;
                 case "device":
                     return ConnectionMode.DEVICE;
                 default:
-                    return ConnectionMode.HYBRID;
+                    return ConnectionMode.CLOUD;
             }
         }
     }
