@@ -1,6 +1,7 @@
 package com.rudderlabs.android.sample.kotlin
 
 import android.app.Application
+import com.rudderlabs.android.sample.kotlin.BuildConfig
 import com.rudderstack.android.integration.braze.BrazeIntegrationFactory
 import com.rudderstack.android.sdk.core.RudderClient
 import com.rudderstack.android.sdk.core.RudderConfig
@@ -17,9 +18,9 @@ class MainApplication : Application() {
         super.onCreate()
         rudderClient = RudderClient.getInstance(
             this,
-            WRITE_KEY,
+            BuildConfig.WRITE_KEY,
             RudderConfig.Builder()
-                .withDataPlaneUrl(DATA_PLANE_URL)
+                .withDataPlaneUrl(BuildConfig.DATA_PLANE_URL)
                 .withLogLevel(RudderLogger.RudderLogLevel.VERBOSE)
                 .withFactory(BrazeIntegrationFactory.FACTORY)
                 .withTrackLifecycleEvents(false)

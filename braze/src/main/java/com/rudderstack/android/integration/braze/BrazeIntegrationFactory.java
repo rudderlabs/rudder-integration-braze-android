@@ -93,6 +93,13 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             this.currency = "USD";
         }
     }
+
+    enum ConnectionMode {
+        HYBRID,
+        CLOUD,
+        DEVICE
+    }
+
     // String constants
     private static final String BRAZE_KEY = "Braze";
     private static final String BRAZE_EXTERNAL_ID_KEY = "brazeExternalId";
@@ -108,6 +115,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private static final String PRICE_KEY = "price";
     private static final String TIME_KEY = "time";
     private static final String EVENT_NAME_KEY = "event_name";
+    private static final String USE_NATIVE_SDK_TO_SEND = "useNativeSDKToSend";
+    private static final String CONNECTION_MODE = "connectionMode";
 
     // Array constants
     private static final Set<String> MALE_KEYS = new HashSet<>(Arrays.asList("M",
@@ -130,6 +139,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     // Config variables
     private boolean autoInAppMessageRegEnabled;
     private boolean supportDedup = false; // default it to false
+    private ConnectionMode connectionMode;
 
     // Previous identify payload
     private RudderMessage previousIdentifyElement = null;
@@ -223,6 +233,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             if (destinationConfig.containsKey(SUPPORT_DEDUP)) {
                 this.supportDedup = getBoolean(destinationConfig.get(SUPPORT_DEDUP));
             }
+
+            this.connectionMode = getConnectionMode(destinationConfig);
 
             // all good. initialize braze sdk
             BrazeConfig.Builder builder =
@@ -518,6 +530,9 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     @Override
     public void dump(@NonNull RudderMessage element) {
         if (braze != null) {
+            if (connectionMode != ConnectionMode.DEVICE) {
+                return;
+            }
             if (element.getType() != null) {
                 switch (element.getType()) {
                     case MessageType.TRACK:
@@ -638,5 +653,17 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             return Boolean.parseBoolean((String) value);
         }
         return false;
+    }
+
+    private ConnectionMode getConnectionMode(Map<String, Object> config) {
+        String connectionMode = (config.containsKey(CONNECTION_MODE)) ? (String)config.get(CONNECTION_MODE) : "";
+        switch (connectionMode) {
+            case "hybrid":
+                return ConnectionMode.HYBRID;
+            case "device":
+                return ConnectionMode.DEVICE;
+            default:
+                return ConnectionMode.CLOUD;
+        }
     }
 }
