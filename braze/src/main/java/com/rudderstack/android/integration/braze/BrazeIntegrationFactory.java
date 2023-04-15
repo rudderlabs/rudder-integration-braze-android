@@ -656,22 +656,14 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     }
 
     private ConnectionMode getConnectionMode(Map<String, Object> config) {
-        String connectionMode = (config.containsKey(CONNECTION_MODE)) ? (String)config.get(CONNECTION_MODE) : null;
-        if (connectionMode == null) {
-            if (config.containsKey(USE_NATIVE_SDK_TO_SEND) && getBoolean(config.get(USE_NATIVE_SDK_TO_SEND))) {
+        String connectionMode = (config.containsKey(CONNECTION_MODE)) ? (String)config.get(CONNECTION_MODE) : "";
+        switch (connectionMode) {
+            case "hybrid":
+                return ConnectionMode.HYBRID;
+            case "device":
                 return ConnectionMode.DEVICE;
-            } else {
-                return  ConnectionMode.CLOUD;
-            }
-        } else {
-            switch (connectionMode) {
-                case "hybrid":
-                    return ConnectionMode.HYBRID;
-                case "device":
-                    return ConnectionMode.DEVICE;
-                default:
-                    return ConnectionMode.CLOUD;
-            }
+            default:
+                return ConnectionMode.CLOUD;
         }
     }
 }
