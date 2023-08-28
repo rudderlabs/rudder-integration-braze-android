@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/rudderlabs/rudder-integration-braze-android/compare/v1.2.0...v1.3.0) (2023-08-28)
+
+
+### Features
+
+* update braze sdk to latest version 27.0.1 ([df65a91](https://github.com/rudderlabs/rudder-integration-braze-android/commit/df65a912180063b35fc226cd8ff7167a3934c76b))
+
 ## 1.2.0 (2023-04-17)
 
 
