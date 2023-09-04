@@ -16,9 +16,8 @@ jobs:
         id: check-outdated-dependencies-and-create-issue
         uses: rudderlabs/github-action-updated-dependencies-notifier@main
         with:
-          outdated-dependency-names: "com.appboy:android-sdk-ui"
+          outdated-dependency-names: "com.braze:android-sdk-ui"
           directory: "braze/build.gradle"
-          repository-urls: "https://appboy.github.io/appboy-android-sdk/sdk"
           title: "fix: update Braze SDK to the latest version"
           assignee: "desusai7"
           labels: "outdatedDependency"
