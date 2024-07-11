@@ -45,7 +45,7 @@ jobs:
         run: ./gradlew braze:codeCoverageReport
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
 
 #  android-test:
 #    needs: cancel_previous
@@ -69,7 +69,7 @@ jobs:
 #      - name: Generate coverage report
 #        run: ./gradlew android:codeCoverageReport
 #      - name: Upload coverage to Codecov
-#        uses: codecov/codecov-action@v2
+#        uses: codecov/codecov-action@v3
 
 #  security:
 #    needs: cancel_previous
