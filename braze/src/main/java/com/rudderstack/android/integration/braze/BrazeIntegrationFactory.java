@@ -214,6 +214,9 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
                 case "US-06":
                     customEndPoint = "sdk.iad-06.braze.com";
                     break;
+                case "US-07":
+                    customEndPoint = "sdk.iad-07.braze.com";
+                    break;
                 case "US-08":
                     customEndPoint = "sdk.iad-08.braze.com";
                     break;
@@ -222,6 +225,9 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
                     break;
                 case "EU-02":
                     customEndPoint = "sdk.fra-02.braze.eu";
+                    break;
+                case "AU-01":
+                    customEndPoint = "sdk.au-01.braze.com";
                     break;
             }
             if (customEndPoint == null) {
