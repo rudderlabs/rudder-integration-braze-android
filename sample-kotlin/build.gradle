@@ -5,13 +5,12 @@ buildscript {
         google()
     }
     dependencies {
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.20'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0'
     }
 }
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 Properties properties = new Properties()
 if (project.rootProject.file('sample-kotlin/local.properties').canRead()) {
@@ -19,19 +18,22 @@ if (project.rootProject.file('sample-kotlin/local.properties').canRead()) {
 }
 
 android {
-    compileSdkVersion 33
+    compileSdk 35
+
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId "com.rudderlabs.android.rudderlabs.rudderlabstest"
-        minSdkVersion 19
-        targetSdkVersion 33
+        minSdkVersion 25
         versionCode 1
         versionName "1.0"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "DATA_PLANE_URL", properties.getProperty('dataplaneUrl', 'https://api.rudderstack.com'))
-        buildConfigField("String", "CONTROL_PLANE_URL", properties.getProperty('controlplaneUrl', 'https://api.rudderstack.com'))
-        buildConfigField("String", "WRITE_KEY", properties.getProperty('writeKey', ''))
+        buildConfigField("String", "DATA_PLANE_URL", properties.getProperty('dataplaneUrl', "\"https://rudderstachdvs.dataplane.rudderstack.com\""))
+        buildConfigField("String", "CONTROL_PLANE_URL", properties.getProperty('controlplaneUrl', "\"https://api.rudderstack.com\""))
+        buildConfigField("String", "WRITE_KEY", properties.getProperty('writeKey', '\"2lEGUmhhp9rKcvW21NuNsZ6PJwo\"'))
     }
     buildTypes {
         release {
@@ -41,19 +43,19 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     namespace 'com.rudderlabs.android.sample.kotlin'
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.10"
-    implementation 'androidx.appcompat:appcompat:1.5.1'
-    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10"
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.core:core-ktx:1.15.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation "androidx.multidex:multidex:2.0.1"
+
 
     implementation 'com.rudderstack.android.sdk:core:[1.0,2.0)'
     implementation project(':braze')
