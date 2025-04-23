@@ -13,7 +13,7 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-      - uses: styfle/cancel-workflow-action@0.9.1
+      - uses: styfle/cancel-workflow-action@85880fa0301c86cca9da44039ee3bb12d3bedbfa #v0.12.1
         with:
           workflow_id: ${{ github.event.workflow.id }}
 
@@ -45,7 +45,7 @@ jobs:
         run: ./gradlew braze:codeCoverageReport
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574
 
 #  android-test:
 #    needs: cancel_previous
