@@ -10,7 +10,7 @@ jobs:
     runs-on: macos-latest
     name: Check outdated dependencies and create issue if it doesn't exist
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check outdated dependencies and create issue
         id: check-outdated-dependencies-and-create-issue
@@ -19,7 +19,7 @@ jobs:
           outdated-dependency-names: "com.braze:android-sdk-ui"
           directory: "braze/build.gradle"
           title: "fix: update Braze SDK to the latest version"
-          assignee: "desusai7"
+          assignee: "@rudderlabs/sdk-android"
           labels: "outdatedDependency"
           color: "FBCA04"
         env:

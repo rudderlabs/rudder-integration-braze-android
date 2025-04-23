@@ -10,12 +10,12 @@ jobs:
     if: startsWith(github.ref, 'refs/heads/feat/') || startsWith(github.ref, 'refs/heads/fix/')
     steps:
       - name: Checkout source branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set Node 16
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 16
 
@@ -73,4 +73,4 @@ jobs:
           github_token: ${{ secrets.PAT }}
           pr_title: "chore(release): pulling ${{ steps.create-release.outputs.branch_name }} into master"
           pr_body:  ":crown: *An automated PR*"
-          pr_reviewer: 'itsdebs'
+          pr_reviewer: '@rudderlabs/sdk-android'
