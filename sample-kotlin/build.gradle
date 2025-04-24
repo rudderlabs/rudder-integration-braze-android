@@ -47,9 +47,6 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
     namespace 'com.rudderlabs.android.sample.kotlin'
-    lint {
-        baseline = file("lint-baseline.xml")
-    }
 
 }
 
