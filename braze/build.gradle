@@ -20,6 +20,9 @@ android {
     }
 
     namespace 'com.rudderstack.android.integration.braze'
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
 }
 
 
