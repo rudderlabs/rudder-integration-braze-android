@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file. See [standa
 
 ### Features
 
-* add missing regions in braze data regions ([#35](https://github.com/rudderlabs/rudder-integration-braze-android/issues/35)) ([f0c9a35](https://github.com/rudderlabs/rudder-integration-braze-android/commit/f0c9a35007afbfeb6db58f33b6e214c44211f22c))
+* add australia and united states regions support in braze sdk ([#35](https://github.com/rudderlabs/rudder-integration-braze-android/issues/35)) ([f0c9a35](https://github.com/rudderlabs/rudder-integration-braze-android/commit/f0c9a35007afbfeb6db58f33b6e214c44211f22c))
 * update braze sdk version to 35.0.0 ([#36](https://github.com/rudderlabs/rudder-integration-braze-android/issues/36)) ([cc1faab](https://github.com/rudderlabs/rudder-integration-braze-android/commit/cc1faab8ccbc161ed40d478395fd279195cb12bc))
 
 
