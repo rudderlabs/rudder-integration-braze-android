@@ -31,9 +31,9 @@ android {
         versionName "1.0"
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "DATA_PLANE_URL", properties.getProperty('dataplaneUrl', 'https://api.rudderstack.com'))
-        buildConfigField("String", "CONTROL_PLANE_URL", properties.getProperty('controlplaneUrl', 'https://api.rudderstack.com'))
-        buildConfigField("String", "WRITE_KEY", properties.getProperty('writeKey', ''))
+        buildConfigField("String", "DATA_PLANE_URL", properties.getProperty('dataplaneUrl', "\"\""))
+        buildConfigField("String", "CONTROL_PLANE_URL", properties.getProperty('controlplaneUrl', '"https://api.rudderstack.com"'))
+        buildConfigField("String", "WRITE_KEY", properties.getProperty('writeKey', "\"\""))
     }
     buildTypes {
         release {
@@ -47,6 +47,7 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
     namespace 'com.rudderlabs.android.sample.kotlin'
+
 }
 
 dependencies {
