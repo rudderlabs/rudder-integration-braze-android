@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 2.0.0 (2025-04-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* update braze sdk version to 35.0.0 (#36)
+
+### Features
+
+* add australia and united states regions support in braze sdk ([#35](https://github.com/rudderlabs/rudder-integration-braze-android/issues/35)) ([f0c9a35](https://github.com/rudderlabs/rudder-integration-braze-android/commit/f0c9a35007afbfeb6db58f33b6e214c44211f22c))
+* update braze sdk version to 35.0.0 ([#36](https://github.com/rudderlabs/rudder-integration-braze-android/issues/36)) ([cc1faab](https://github.com/rudderlabs/rudder-integration-braze-android/commit/cc1faab8ccbc161ed40d478395fd279195cb12bc))
+
+
+### Bug Fixes
+
+* merging of anonymous with identified profile ([#33](https://github.com/rudderlabs/rudder-integration-braze-android/issues/33)) ([f7a3cc8](https://github.com/rudderlabs/rudder-integration-braze-android/commit/f7a3cc88a1eb6d6dde7c84e316d6127d4be5d6a3))
+
 ## [1.3.0](https://github.com/rudderlabs/rudder-integration-braze-android/compare/v1.2.0...v1.3.0) (2023-08-28)
 
 
