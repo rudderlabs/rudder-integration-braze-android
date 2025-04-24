@@ -133,6 +133,8 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private static final List<String> RESERVED_KEY_SET = Arrays.asList(BIRTHDAY, EMAIL, FIRSTNAME,
             LASTNAME, GENDER, PHONE, ADDRESS);
 
+    private static final String RUDDER_LABEL = "rudder_id";
+
     // Braze instance
     private Braze braze;
 
@@ -148,7 +150,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     public static final Factory FACTORY = new Factory() {
         @Override
         public RudderIntegration<?> create(Object settings, RudderClient client, RudderConfig rudderConfig) {
-            return new BrazeIntegrationFactory(settings, rudderConfig);
+            return new BrazeIntegrationFactory(settings, client, rudderConfig);
         }
 
         @Override
@@ -157,7 +159,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
         }
     };
 
-    private BrazeIntegrationFactory(Object config, RudderConfig rudderConfig) {
+    private BrazeIntegrationFactory(Object config, RudderClient client, RudderConfig rudderConfig) {
         String apiKey = "";
         Map<String, Object> destinationConfig = (Map<String, Object>) config;
         if (destinationConfig == null) {
@@ -253,6 +255,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             );
             Braze.configure(RudderClient.getApplication().getApplicationContext(), builder.build());
             this.braze = Braze.getInstance(RudderClient.getApplication());
+            setUserAlias(client.getAnonymousId());
             RudderLogger.logInfo("Configured Braze + Rudder integration and initialized Braze.");
 
             RudderClient.getApplication().registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
@@ -300,6 +303,10 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
                 }
             });
         }
+    }
+
+    private void setUserAlias(String anonymousId) {
+        this.braze.getCurrentUser().addAlias(anonymousId, RUDDER_LABEL);
     }
 
     private void processTrackEvent(RudderMessage element) {
