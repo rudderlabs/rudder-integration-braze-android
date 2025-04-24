@@ -1,11 +1,14 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 31
+    compileSdk 34
+
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
-        minSdkVersion 19
-        targetSdkVersion 31
+        minSdkVersion 25
         buildConfigField("String", "VERSION_NAME", "\"${VERSION_NAME}\"")
     }
 
@@ -15,10 +18,7 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
+
     namespace 'com.rudderstack.android.integration.braze'
 }
 
@@ -29,7 +29,7 @@ dependencies {
     // RudderStack SDK
     compileOnly 'com.rudderstack.android.sdk:core:[1.12,2.0)'
     // Braze SDK
-    implementation 'com.braze:android-sdk-ui:[27.0,28.0)'
+    implementation 'com.braze:android-sdk-ui:35.0.0'
 
     implementation 'com.google.code.gson:gson:2.8.9'
     testImplementation 'com.android.support.test:rules:1.0.2'
