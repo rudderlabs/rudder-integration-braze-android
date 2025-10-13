@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 16
       # In order to make a commit, we need to initialize a user.
