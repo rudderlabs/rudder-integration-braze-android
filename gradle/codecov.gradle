@@ -29,9 +29,9 @@ task codeCoverageReport(type: JacocoReport) {
     executionData.setFrom(execData)
 
     reports {
-        xml.required.set true
-        xml.outputLocation.set file("${buildDir}/reports/jacoco/report.xml")
-        html.required.set true
-        csv.required.set false
+        xml.required = true
+        xml.outputLocation = file("${buildDir}/reports/jacoco/report.xml")
+        html.required = true
+        csv.required = false
     }
 }
