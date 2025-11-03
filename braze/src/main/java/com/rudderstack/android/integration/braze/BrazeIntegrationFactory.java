@@ -108,7 +108,13 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private static final String CURRENCY_KEY = "currency";
     private static final String PRODUCTS_KEY = "products";
     private static final String DATA_CENTER_KEY = "dataCenter";
+    private static final String ANDROID_APP_KEY = "androidAppKey";
+    /**
+     * @deprecated Use {@link #ANDROID_APP_KEY} instead. This field is kept for backward compatibility.
+     */
+    @Deprecated
     private static final String API_KEY = "appKey";
+    private static final String USE_PLATFORM_SPECIFIC_KEYS = "usePlatformSpecificKeys";
     private static final String SUPPORT_DEDUP = "supportDedup";
     private static final String PRODUCT_ID_KEY = "product_id";
     private static final String QUANTITY_KEY = "quantity";
@@ -168,7 +174,11 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             RudderLogger.logError("RudderClient is not initialized correctly. Application is null. Aborting Braze initialization.");
         } else {
             // get apiKey and return if null or blank
-            if (destinationConfig.containsKey(API_KEY)) {
+            // Check if platform-specific key should be used
+            if (getBoolean(destinationConfig.get(USE_PLATFORM_SPECIFIC_KEYS))
+                    && destinationConfig.containsKey(ANDROID_APP_KEY)) {
+                apiKey = (String) destinationConfig.get(ANDROID_APP_KEY);
+            } else if (destinationConfig.containsKey(API_KEY)) {
                 apiKey = (String) destinationConfig.get(API_KEY);
             }
             if (TextUtils.isEmpty(apiKey)) {
