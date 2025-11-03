@@ -173,8 +173,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
         } else if (RudderClient.getApplication() == null) {
             RudderLogger.logError("RudderClient is not initialized correctly. Application is null. Aborting Braze initialization.");
         } else {
-            // get apiKey and return if null or blank
-            // Check if platform-specific key should be used
+            // Prefer platform-specific key if present
             if (getBoolean(destinationConfig.get(USE_PLATFORM_SPECIFIC_KEYS))
                     && destinationConfig.containsKey(ANDROID_APP_KEY)) {
                 apiKey = (String) destinationConfig.get(ANDROID_APP_KEY);
