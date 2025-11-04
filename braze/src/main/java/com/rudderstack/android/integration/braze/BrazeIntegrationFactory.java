@@ -174,7 +174,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
                     && destinationConfig.containsKey(ANDROID_APP_KEY)) {
                 apiKey = (String) destinationConfig.get(ANDROID_APP_KEY);
             }
-            // Fallback to default app key if platform-specific key is not defined or is empty
+            // Fallback to default app key if either platform-specific key is not present or is set to false
             if (TextUtils.isEmpty(apiKey) && destinationConfig.containsKey(API_KEY)) {
                 apiKey = (String) destinationConfig.get(API_KEY);
             }
