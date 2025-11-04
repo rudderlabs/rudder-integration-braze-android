@@ -109,10 +109,6 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private static final String PRODUCTS_KEY = "products";
     private static final String DATA_CENTER_KEY = "dataCenter";
     private static final String ANDROID_APP_KEY = "androidAppKey";
-    /**
-     * @deprecated Use {@link #ANDROID_APP_KEY} instead. This field is kept for backward compatibility.
-     */
-    @Deprecated(since = "2.1.0", forRemoval = false)
     private static final String API_KEY = "appKey";
     private static final String USE_PLATFORM_SPECIFIC_API_KEYS = "usePlatformSpecificApiKeys";
     private static final String SUPPORT_DEDUP = "supportDedup";
