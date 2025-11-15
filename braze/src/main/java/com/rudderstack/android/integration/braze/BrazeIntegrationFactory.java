@@ -108,7 +108,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private static final String CURRENCY_KEY = "currency";
     private static final String PRODUCTS_KEY = "products";
     private static final String DATA_CENTER_KEY = "dataCenter";
-    private static final String ANDROID_APP_KEY = "androidAppKey";
+    private static final String ANDROID_API_KEY = "androidApiKey";
     private static final String API_KEY = "appKey";
     private static final String USE_PLATFORM_SPECIFIC_API_KEYS = "usePlatformSpecificApiKeys";
     private static final String SUPPORT_DEDUP = "supportDedup";
@@ -171,11 +171,14 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
         } else {
             // Prefer platform-specific key if present and not empty
             if (getBoolean(destinationConfig.get(USE_PLATFORM_SPECIFIC_API_KEYS))
-                    && destinationConfig.containsKey(ANDROID_APP_KEY)) {
-                apiKey = (String) destinationConfig.get(ANDROID_APP_KEY);
+                    && destinationConfig.containsKey(ANDROID_API_KEY)) {
+                apiKey = (String) destinationConfig.get(ANDROID_API_KEY);
             }
             // Fallback to default app key if either platform-specific key is not present or is set to false
             if (TextUtils.isEmpty(apiKey) && destinationConfig.containsKey(API_KEY)) {
+                if (getBoolean(destinationConfig.get(USE_PLATFORM_SPECIFIC_API_KEYS))) {
+                    RudderLogger.logWarn("BrazeIntegration: usePlatformSpecificApiKeys is enabled but androidApiKey is not configured. Falling back to legacy apiKey.");
+                }
                 apiKey = (String) destinationConfig.get(API_KEY);
             }
             if (TextUtils.isEmpty(apiKey)) {
