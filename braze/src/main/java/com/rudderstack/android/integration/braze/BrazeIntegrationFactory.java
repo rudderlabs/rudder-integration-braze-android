@@ -169,17 +169,22 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
         } else if (RudderClient.getApplication() == null) {
             RudderLogger.logError("RudderClient is not initialized correctly. Application is null. Aborting Braze initialization.");
         } else {
-            // Prefer platform-specific key if present and not empty
-            if (getBoolean(destinationConfig.get(USE_PLATFORM_SPECIFIC_API_KEYS))
-                    && destinationConfig.containsKey(ANDROID_API_KEY)) {
-                apiKey = (String) destinationConfig.get(ANDROID_API_KEY);
+            // Start with default API key
+            if (destinationConfig.containsKey(API_KEY)) {
+                apiKey = (String) destinationConfig.get(API_KEY);
             }
-            // Fallback to default app key if either platform-specific key is not present or is set to false
-            if (TextUtils.isEmpty(apiKey) && destinationConfig.containsKey(API_KEY)) {
-                if (getBoolean(destinationConfig.get(USE_PLATFORM_SPECIFIC_API_KEYS))) {
+
+            // Override with platform-specific key if configured
+            if (getBoolean(destinationConfig.get(USE_PLATFORM_SPECIFIC_API_KEYS))) {
+                String androidApiKey = destinationConfig.containsKey(ANDROID_API_KEY)
+                        ? (String) destinationConfig.get(ANDROID_API_KEY)
+                        : "";
+
+                if (!TextUtils.isEmpty(androidApiKey)) {
+                    apiKey = androidApiKey;
+                } else {
                     RudderLogger.logWarn("BrazeIntegration: Configured to use platform-specific API keys but Android API key is not valid. Falling back to the default API key.");
                 }
-                apiKey = (String) destinationConfig.get(API_KEY);
             }
             if (TextUtils.isEmpty(apiKey)) {
                 RudderLogger.logError("Invalid API key. Aborting Braze initialization.");
