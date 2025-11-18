@@ -177,12 +177,12 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             // Fallback to default app key if either platform-specific key is not present or is set to false
             if (TextUtils.isEmpty(apiKey) && destinationConfig.containsKey(API_KEY)) {
                 if (getBoolean(destinationConfig.get(USE_PLATFORM_SPECIFIC_API_KEYS))) {
-                    RudderLogger.logWarn("BrazeIntegration: usePlatformSpecificApiKeys is enabled but androidApiKey is not configured. Falling back to legacy apiKey.");
+                    RudderLogger.logWarn("BrazeIntegration: Configured to use platform-specific API keys but Android API key is not valid. Falling back to the default API key.");
                 }
                 apiKey = (String) destinationConfig.get(API_KEY);
             }
             if (TextUtils.isEmpty(apiKey)) {
-                RudderLogger.logError("Invalid api key. Aborting Braze initialization.");
+                RudderLogger.logError("Invalid API key. Aborting Braze initialization.");
                 return;
             }
 
