@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 2.1.0 (2025-11-27)
+
+
+### Features
+
+* **braze:** add support for platform-specific app keys ([#48](https://github.com/rudderlabs/rudder-integration-braze-android/issues/48)) ([92cbd53](https://github.com/rudderlabs/rudder-integration-braze-android/commit/92cbd535c73bad3abfba71b9c2d0a21b11f66826))
+
 ## 2.0.0 (2025-04-24)
 
 

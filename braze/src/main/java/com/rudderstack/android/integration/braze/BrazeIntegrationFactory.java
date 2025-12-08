@@ -108,7 +108,9 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private static final String CURRENCY_KEY = "currency";
     private static final String PRODUCTS_KEY = "products";
     private static final String DATA_CENTER_KEY = "dataCenter";
+    private static final String ANDROID_API_KEY = "androidApiKey";
     private static final String API_KEY = "appKey";
+    private static final String USE_PLATFORM_SPECIFIC_API_KEYS = "usePlatformSpecificApiKeys";
     private static final String SUPPORT_DEDUP = "supportDedup";
     private static final String PRODUCT_ID_KEY = "product_id";
     private static final String QUANTITY_KEY = "quantity";
@@ -167,12 +169,25 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
         } else if (RudderClient.getApplication() == null) {
             RudderLogger.logError("RudderClient is not initialized correctly. Application is null. Aborting Braze initialization.");
         } else {
-            // get apiKey and return if null or blank
+            // Start with default API key
             if (destinationConfig.containsKey(API_KEY)) {
                 apiKey = (String) destinationConfig.get(API_KEY);
             }
+
+            // Override with platform-specific key if configured
+            if (getBoolean(destinationConfig.get(USE_PLATFORM_SPECIFIC_API_KEYS))) {
+                String androidApiKey = destinationConfig.containsKey(ANDROID_API_KEY)
+                        ? (String) destinationConfig.get(ANDROID_API_KEY)
+                        : "";
+
+                if (!TextUtils.isEmpty(androidApiKey)) {
+                    apiKey = androidApiKey;
+                } else {
+                    RudderLogger.logWarn("BrazeIntegration: Configured to use platform-specific API keys but Android API key is not valid. Falling back to the default API key.");
+                }
+            }
             if (TextUtils.isEmpty(apiKey)) {
-                RudderLogger.logError("Invalid api key. Aborting Braze initialization.");
+                RudderLogger.logError("Invalid API key. Aborting Braze initialization.");
                 return;
             }
 
