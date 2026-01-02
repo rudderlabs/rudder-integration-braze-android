@@ -108,9 +108,9 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private static final String CURRENCY_KEY = "currency";
     private static final String PRODUCTS_KEY = "products";
     private static final String DATA_CENTER_KEY = "dataCenter";
-    private static final String ANDROID_API_KEY = "androidApiKey";
-    private static final String API_KEY = "appKey";
-    private static final String USE_PLATFORM_SPECIFIC_API_KEYS = "usePlatformSpecificApiKeys";
+    private static final String ANDROID_APP_IDENTIFIER_KEY = "androidApiKey";
+    private static final String DEFAULT_APP_IDENTIFIER_KEY = "appKey";
+    private static final String USE_PLATFORM_SPECIFIC_APP_IDENTIFIER_KEYS = "usePlatformSpecificApiKeys";
     private static final String SUPPORT_DEDUP = "supportDedup";
     private static final String PRODUCT_ID_KEY = "product_id";
     private static final String QUANTITY_KEY = "quantity";
@@ -162,32 +162,32 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     };
 
     private BrazeIntegrationFactory(Object config, RudderClient client, RudderConfig rudderConfig) {
-        String apiKey = "";
+        String appIdentifierKey = "";
         Map<String, Object> destinationConfig = (Map<String, Object>) config;
         if (destinationConfig == null) {
-            RudderLogger.logError("Invalid api key. Aborting Braze initialization.");
+            RudderLogger.logError("Invalid App Identifier Key. Aborting Braze initialization.");
         } else if (RudderClient.getApplication() == null) {
             RudderLogger.logError("RudderClient is not initialized correctly. Application is null. Aborting Braze initialization.");
         } else {
-            // Start with default API key
-            if (destinationConfig.containsKey(API_KEY)) {
-                apiKey = (String) destinationConfig.get(API_KEY);
+            // Start with default App Identifier Key
+            if (destinationConfig.containsKey(DEFAULT_APP_IDENTIFIER_KEY)) {
+                appIdentifierKey = (String) destinationConfig.get(DEFAULT_APP_IDENTIFIER_KEY);
             }
 
             // Override with platform-specific key if configured
-            if (getBoolean(destinationConfig.get(USE_PLATFORM_SPECIFIC_API_KEYS))) {
-                String androidApiKey = destinationConfig.containsKey(ANDROID_API_KEY)
-                        ? (String) destinationConfig.get(ANDROID_API_KEY)
+            if (getBoolean(destinationConfig.get(USE_PLATFORM_SPECIFIC_APP_IDENTIFIER_KEYS))) {
+                String androidAppIdentifierKey = destinationConfig.containsKey(ANDROID_APP_IDENTIFIER_KEY)
+                        ? (String) destinationConfig.get(ANDROID_APP_IDENTIFIER_KEY)
                         : "";
 
-                if (!TextUtils.isEmpty(androidApiKey)) {
-                    apiKey = androidApiKey;
+                if (!TextUtils.isEmpty(androidAppIdentifierKey)) {
+                    appIdentifierKey = androidAppIdentifierKey;
                 } else {
-                    RudderLogger.logWarn("BrazeIntegration: Configured to use platform-specific API keys but Android API key is not valid. Falling back to the default API key.");
+                    RudderLogger.logWarn("BrazeIntegration: Configured to use platform-specific App Identifier Keys but Android App Identifier Key is not valid. Falling back to the Default App Identifier Key.");
                 }
             }
-            if (TextUtils.isEmpty(apiKey)) {
-                RudderLogger.logError("Invalid API key. Aborting Braze initialization.");
+            if (TextUtils.isEmpty(appIdentifierKey)) {
+                RudderLogger.logError("Invalid App Identifier Key. Aborting Braze initialization.");
                 return;
             }
 
@@ -262,7 +262,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             // all good. initialize braze sdk
             BrazeConfig.Builder builder =
                     new BrazeConfig.Builder()
-                            .setApiKey(apiKey)
+                            .setApiKey(appIdentifierKey)
                             .setCustomEndpoint(customEndPoint);
             BrazeLogger.setLogLevel(
                     rudderConfig.getLogLevel() >= RudderLogger.RudderLogLevel.DEBUG ?
