@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.1.1](https://github.com/rudderlabs/rudder-integration-braze-android/compare/v2.1.0...v2.1.1) (2026-01-02)
+
+
+### Bug Fixes
+
+* **braze:** rename API key variables to App Identifier Key ([61c5c67](https://github.com/rudderlabs/rudder-integration-braze-android/commit/61c5c679775b0f6b4de2c82fb602b39ec0269603))
+
 ## 2.1.0 (2025-11-27)
 
 
