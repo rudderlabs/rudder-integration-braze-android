@@ -55,7 +55,7 @@ jobs:
           git fetch origin master --depth=1
           git merge origin/master --allow-unrelated-histories
           current_version=$(cat gradle.properties | grep "VERSION_NAME" | cut -d'=' -f2)
-          
+
           npm ci
           npx standard-version --skip.commit --skip.tag --skip.changelog
           new_version=$(cat gradle.properties | grep "VERSION_NAME" | cut -d'=' -f2)
@@ -69,21 +69,33 @@ jobs:
           echo "New version is $new_version"
           echo "New release branch name is $branch_name"
           git checkout -b "$branch_name"
-          git push --set-upstream origin "$branch_name"
-          
+
           echo "source_branch_name=$source_branch_name" >> $GITHUB_OUTPUT
           echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
           echo "new_version=$new_version" >> $GITHUB_OUTPUT
+
+      - name: Push release branch to remote
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          git push --set-upstream origin "${{ steps.create-release.outputs.branch_name }}"
 
       - name: Update changelog & bump version
         id: finish-release
         run: |
           npm ci
-          npx standard-version -a --skip.tag
+          npx standard-version -a --skip.commit --skip.tag
 
-      - name: Push new version in release branch
-        run: |
-          git push
+      - name: Create verified commit with changelog and version bump
+        uses: ryancyq/github-signed-commit@e9f3b28c80da7be66d24b8f501a5abe82a6b855f # v1.2.0
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        with:
+          branch-name: ${{ steps.create-release.outputs.branch_name }}
+          commit-message: 'chore(release): v${{ steps.create-release.outputs.new_version }}'
+          files: |
+            CHANGELOG.md
+            gradle.properties
 
       - name: Create pull request into master
         uses: repo-sync/pull-request@7e79a9f5dc3ad0ce53138f01df2fad14a04831c5
