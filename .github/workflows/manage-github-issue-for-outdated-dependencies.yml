@@ -19,7 +19,7 @@ jobs:
 
       - name: Check outdated dependencies and create issue
         id: check-outdated-dependencies-and-create-issue
-        uses: rudderlabs/github-action-updated-dependencies-notifier@78835fb7a62239044bee3cb4d2d3424b165663a6 # main
+        uses: rudderlabs/github-action-updated-dependencies-notifier@78835fb7a62239044bee3cb4d2d3424b165663a6 # v1.0.1
         with:
           outdated-dependency-names: "com.braze:android-sdk-ui"
           directory: "braze/build.gradle"
