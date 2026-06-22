@@ -120,6 +120,10 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private static final String USE_NATIVE_SDK_TO_SEND = "useNativeSDKToSend";
     private static final String CONNECTION_MODE = "connectionMode";
 
+    // Recommended ecommerce events config flag (default off; on = hard cutover). The mapping logic
+    // itself lives in Utils.
+    private static final String USE_RECOMMENDED_ECOMMERCE_EVENTS = "useRecommendedEcommerceEvents";
+
     // Array constants
     private static final Set<String> MALE_KEYS = new HashSet<>(Arrays.asList("M",
             "MALE"));
@@ -144,6 +148,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private boolean autoInAppMessageRegEnabled;
     private boolean supportDedup = false; // default it to false
     private ConnectionMode connectionMode;
+    private boolean useRecommendedEcommerceEvents = false;
 
     // Previous identify payload
     private RudderMessage previousIdentifyElement = null;
@@ -259,6 +264,9 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
 
             this.connectionMode = getConnectionMode(destinationConfig);
 
+            // check for recommended ecommerce events flag. default false
+            this.useRecommendedEcommerceEvents = getBoolean(destinationConfig.get(USE_RECOMMENDED_ECOMMERCE_EVENTS));
+
             // all good. initialize braze sdk
             BrazeConfig.Builder builder =
                     new BrazeConfig.Builder()
@@ -332,6 +340,21 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
 
         Map<String, Object> eventProperties = element.getProperties();
         try {
+            // When the flag is on, recommended ecommerce events take a hard cutover before the
+            // legacy Order Completed / logCustomEvent path. Events with no recommended-event
+            // counterpart (Product Clicked, Cart Viewed, Install Attributed, etc.) fall through
+            // and keep their existing behaviour.
+            if (useRecommendedEcommerceEvents) {
+                Utils.EcommerceEvent ecommerceEvent = Utils.resolveEcommerceEvent(event);
+                if (ecommerceEvent != null) {
+                    Map<String, Object> brazeProperties = Utils.buildEcommerceProperties(ecommerceEvent, eventProperties);
+                    RudderLogger.logDebug(String.format(
+                            "Braze logCustomEvent for recommended ecommerce event %s with properties %% %s",
+                            ecommerceEvent.getBrazeEvent(), brazeProperties.toString()));
+                    this.braze.logCustomEvent(ecommerceEvent.getBrazeEvent(), new BrazeProperties(brazeProperties));
+                    return;
+                }
+            }
             if (event.equals("Install Attributed")) {
                 if (eventProperties != null && eventProperties.containsKey("campaign") && this.braze.getCurrentUser() != null) {
                     Map<String, Object> campaignProps = (Map<String, Object>) eventProperties.get("campaign");
