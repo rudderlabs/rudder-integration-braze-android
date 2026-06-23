@@ -69,8 +69,13 @@ class Utils {
     private static final String EC_VALUE = "value";
     private static final String EC_TAX = "tax";
     private static final String EC_SHIPPING = "shipping";
-    // cancel_reason has no standard RS field at all (Braze-required gap).
+    private static final String EC_TYPE = "type";
+    private static final String EC_SUBTOTAL_VALUE = "subtotal_value";
+    private static final String EC_DISCOUNTS = "discounts";
+    private static final String EC_TOTAL_DISCOUNTS = "total_discounts";
+    // cancel_reason / reason are both valid RS sources for Braze's required cancel_reason.
     private static final String EC_CANCEL_REASON = "cancel_reason";
+    private static final String EC_REASON = ECommerceParamNames.REASON;
 
     // Braze recommended-event field names (official Braze schema names — destination side).
     private static final String BRAZE_PRODUCT_ID = "product_id";
@@ -91,6 +96,9 @@ class Utils {
     private static final String BRAZE_SHIPPING = "shipping";
     private static final String BRAZE_TOTAL_DISCOUNTS = "total_discounts";
     private static final String BRAZE_CANCEL_REASON = "cancel_reason";
+    private static final String BRAZE_TYPE = "type";
+    private static final String BRAZE_SUBTOTAL_VALUE = "subtotal_value";
+    private static final String BRAZE_DISCOUNTS = "discounts";
     private static final String BRAZE_METADATA = "metadata";
 
     // Consumed-key sets drive metadata pass-through (D6): any RS source key NOT consumed by a
@@ -98,21 +106,23 @@ class Utils {
     private static final Set<String> PRODUCT_CONSUMED_KEYS = new HashSet<>(Arrays.asList(
             EC_PRODUCT_ID, EC_SKU, EC_NAME, EC_VARIANT, EC_QUANTITY, EC_PRICE, EC_IMAGE_URL, EC_URL));
     private static final Set<String> PRODUCT_VIEWED_CONSUMED_KEYS = new HashSet<>(Arrays.asList(
-            EC_PRODUCT_ID, EC_SKU, EC_NAME, EC_VARIANT, EC_PRICE, EC_CURRENCY, EC_IMAGE_URL, EC_URL));
+            EC_PRODUCT_ID, EC_SKU, EC_NAME, EC_VARIANT, EC_PRICE, EC_CURRENCY, EC_IMAGE_URL, EC_URL,
+            EC_TYPE));
     private static final Set<String> CART_UPDATED_CONSUMED_KEYS = new HashSet<>(Arrays.asList(
             EC_CART_ID, EC_CURRENCY, EC_PRODUCT_ID, EC_SKU, EC_NAME, EC_VARIANT, EC_QUANTITY, EC_PRICE,
-            EC_IMAGE_URL, EC_URL));
+            EC_IMAGE_URL, EC_URL, EC_TOTAL, EC_VALUE, EC_SUBTOTAL_VALUE, EC_TAX, EC_SHIPPING));
     private static final Set<String> CHECKOUT_STARTED_CONSUMED_KEYS = new HashSet<>(Arrays.asList(
-            EC_CHECKOUT_ID, EC_ORDER_ID, EC_TOTAL, EC_REVENUE, EC_VALUE, EC_CURRENCY, EC_PRODUCTS, EC_TAX,
-            EC_SHIPPING));
+            EC_CHECKOUT_ID, EC_ORDER_ID, EC_CART_ID, EC_TOTAL, EC_REVENUE, EC_VALUE, EC_SUBTOTAL_VALUE,
+            EC_CURRENCY, EC_PRODUCTS, EC_TAX, EC_SHIPPING));
     private static final Set<String> ORDER_PLACED_CONSUMED_KEYS = new HashSet<>(Arrays.asList(
-            EC_ORDER_ID, EC_TOTAL, EC_REVENUE, EC_VALUE, EC_CURRENCY, EC_PRODUCTS, EC_TAX, EC_SHIPPING,
-            EC_DISCOUNT));
+            EC_ORDER_ID, EC_CART_ID, EC_TOTAL, EC_REVENUE, EC_VALUE, EC_SUBTOTAL_VALUE, EC_CURRENCY,
+            EC_PRODUCTS, EC_TAX, EC_SHIPPING, EC_DISCOUNT, EC_TOTAL_DISCOUNTS, EC_DISCOUNTS));
     private static final Set<String> ORDER_REFUNDED_CONSUMED_KEYS = new HashSet<>(Arrays.asList(
-            EC_ORDER_ID, EC_TOTAL, EC_REVENUE, EC_VALUE, EC_CURRENCY, EC_PRODUCTS));
+            EC_ORDER_ID, EC_TOTAL, EC_REVENUE, EC_VALUE, EC_CURRENCY, EC_PRODUCTS, EC_DISCOUNT,
+            EC_TOTAL_DISCOUNTS, EC_DISCOUNTS));
     private static final Set<String> ORDER_CANCELLED_CONSUMED_KEYS = new HashSet<>(Arrays.asList(
-            EC_ORDER_ID, EC_TOTAL, EC_CURRENCY, EC_CANCEL_REASON, EC_PRODUCTS, EC_TAX, EC_SHIPPING,
-            EC_DISCOUNT));
+            EC_ORDER_ID, EC_TOTAL, EC_REVENUE, EC_VALUE, EC_SUBTOTAL_VALUE, EC_CURRENCY, EC_CANCEL_REASON,
+            EC_REASON, EC_PRODUCTS, EC_TAX, EC_SHIPPING, EC_DISCOUNT, EC_TOTAL_DISCOUNTS, EC_DISCOUNTS));
 
     // Case-insensitive RudderStack event name -> Braze recommended event.
     private static final Map<String, EcommerceEvent> ECOMMERCE_EVENT_MAPPING = buildEcommerceEventMapping();
@@ -192,6 +202,7 @@ class Utils {
         putIfPresent(out, BRAZE_CURRENCY, currency);
         putIfPresent(out, BRAZE_IMAGE_URL, firstNonNull(props, EC_IMAGE_URL));
         putIfPresent(out, BRAZE_PRODUCT_URL, firstNonNull(props, EC_URL));
+        putIfPresent(out, BRAZE_TYPE, firstNonNull(props, EC_TYPE));
         out.put(SOURCE_KEY, SOURCE);
 
         putMetadata(out, props, PRODUCT_VIEWED_CONSUMED_KEYS);
@@ -216,6 +227,10 @@ class Utils {
 
         putIfPresent(out, BRAZE_CART_ID, cartId);
         putIfPresent(out, BRAZE_CURRENCY, currency);
+        putIfPresent(out, BRAZE_TOTAL_VALUE, firstNonNull(props, EC_TOTAL, EC_VALUE));
+        putIfPresent(out, BRAZE_SUBTOTAL_VALUE, firstNonNull(props, EC_SUBTOTAL_VALUE));
+        putIfPresent(out, BRAZE_TAX, firstNonNull(props, EC_TAX));
+        putIfPresent(out, BRAZE_SHIPPING, firstNonNull(props, EC_SHIPPING));
         out.put(BRAZE_ACTION, action);
         if (!product.isEmpty()) {
             List<Map<String, Object>> products = new ArrayList<>();
@@ -251,6 +266,8 @@ class Utils {
         if (products != null) {
             out.put(BRAZE_PRODUCTS, products);
         }
+        putIfPresent(out, BRAZE_CART_ID, firstNonNull(props, EC_CART_ID));
+        putIfPresent(out, BRAZE_SUBTOTAL_VALUE, firstNonNull(props, EC_SUBTOTAL_VALUE));
         putIfPresent(out, BRAZE_TAX, firstNonNull(props, EC_TAX));
         putIfPresent(out, BRAZE_SHIPPING, firstNonNull(props, EC_SHIPPING));
         out.put(SOURCE_KEY, SOURCE);
@@ -283,9 +300,12 @@ class Utils {
         if (products != null) {
             out.put(BRAZE_PRODUCTS, products);
         }
+        putIfPresent(out, BRAZE_CART_ID, firstNonNull(props, EC_CART_ID));
         putIfPresent(out, BRAZE_TAX, firstNonNull(props, EC_TAX));
         putIfPresent(out, BRAZE_SHIPPING, firstNonNull(props, EC_SHIPPING));
-        putIfPresent(out, BRAZE_TOTAL_DISCOUNTS, firstNonNull(props, EC_DISCOUNT));
+        putIfPresent(out, BRAZE_TOTAL_DISCOUNTS, firstNonNull(props, EC_DISCOUNT, EC_TOTAL_DISCOUNTS));
+        putIfPresent(out, BRAZE_SUBTOTAL_VALUE, firstNonNull(props, EC_SUBTOTAL_VALUE));
+        putIfPresent(out, BRAZE_DISCOUNTS, firstNonNull(props, EC_DISCOUNTS));
         out.put(SOURCE_KEY, SOURCE);
 
         putMetadata(out, props, ORDER_PLACED_CONSUMED_KEYS);
@@ -316,22 +336,24 @@ class Utils {
         if (products != null) {
             out.put(BRAZE_PRODUCTS, products);
         }
+        putIfPresent(out, BRAZE_TOTAL_DISCOUNTS, firstNonNull(props, EC_DISCOUNT, EC_TOTAL_DISCOUNTS));
+        putIfPresent(out, BRAZE_DISCOUNTS, firstNonNull(props, EC_DISCOUNTS));
         out.put(SOURCE_KEY, SOURCE);
 
         putMetadata(out, props, ORDER_REFUNDED_CONSUMED_KEYS);
         return out;
     }
 
-    // ecommerce.order_cancelled — total_value is the absolute value of total; cancel_reason has
-    // no standard RS source (mapped if present, warned if absent).
+    // ecommerce.order_cancelled — cancel_reason falls back to the standard RS reason field
+    // (mapped if present, warned if absent).
     private static Map<String, Object> buildOrderCancelled(Map<String, Object> props) {
         String brazeEvent = EcommerceEvent.ORDER_CANCELLED.brazeEvent;
         Map<String, Object> out = new HashMap<>();
 
         Object orderId = firstNonNull(props, EC_ORDER_ID);
-        Object totalValue = toAbsoluteValue(firstNonNull(props, EC_TOTAL));
+        Object totalValue = firstNonNull(props, EC_TOTAL, EC_REVENUE, EC_VALUE);
         Object currency = firstNonNull(props, EC_CURRENCY);
-        Object cancelReason = firstNonNull(props, EC_CANCEL_REASON);
+        Object cancelReason = firstNonNull(props, EC_CANCEL_REASON, EC_REASON);
         List<Map<String, Object>> products = buildProducts(props);
 
         warnIfMissing(brazeEvent, BRAZE_ORDER_ID, orderId);
@@ -351,7 +373,9 @@ class Utils {
         }
         putIfPresent(out, BRAZE_TAX, firstNonNull(props, EC_TAX));
         putIfPresent(out, BRAZE_SHIPPING, firstNonNull(props, EC_SHIPPING));
-        putIfPresent(out, BRAZE_TOTAL_DISCOUNTS, firstNonNull(props, EC_DISCOUNT));
+        putIfPresent(out, BRAZE_TOTAL_DISCOUNTS, firstNonNull(props, EC_DISCOUNT, EC_TOTAL_DISCOUNTS));
+        putIfPresent(out, BRAZE_SUBTOTAL_VALUE, firstNonNull(props, EC_SUBTOTAL_VALUE));
+        putIfPresent(out, BRAZE_DISCOUNTS, firstNonNull(props, EC_DISCOUNTS));
         out.put(SOURCE_KEY, SOURCE);
 
         putMetadata(out, props, ORDER_CANCELLED_CONSUMED_KEYS);
@@ -435,17 +459,6 @@ class Utils {
             RudderLogger.logWarn(String.format(
                     "BrazeIntegrationFactory: recommended event %s is missing required field '%s'; sending event anyway.",
                     brazeEvent, field));
-        }
-    }
-
-    private static Object toAbsoluteValue(Object value) {
-        if (value == null) {
-            return null;
-        }
-        try {
-            return Math.abs(Double.parseDouble(String.valueOf(value)));
-        } catch (NumberFormatException exception) {
-            return value;
         }
     }
 }
