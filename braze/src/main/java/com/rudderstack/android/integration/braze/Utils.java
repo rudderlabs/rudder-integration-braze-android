@@ -4,10 +4,12 @@ import com.rudderstack.android.sdk.core.RudderLogger;
 import com.rudderstack.android.sdk.core.ecomm.ECommerceEvents;
 import com.rudderstack.android.sdk.core.ecomm.ECommerceParamNames;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -124,6 +126,50 @@ class Utils {
             EC_ORDER_ID, EC_TOTAL, EC_REVENUE, EC_VALUE, EC_SUBTOTAL_VALUE, EC_CURRENCY, EC_CANCEL_REASON,
             EC_REASON, EC_PRODUCTS, EC_TAX, EC_SHIPPING, EC_DISCOUNT, EC_TOTAL_DISCOUNTS, EC_DISCOUNTS));
 
+    // The data type Braze expects for a recommended-event field. Resolved values are coerced to this
+    // type where possible; a value that cannot be coerced is sent as-is and surfaced via a warning.
+    enum BrazeFieldType {
+        STRING,
+        INTEGER,
+        FLOAT,
+        STRING_ARRAY,
+        ARRAY
+    }
+
+    // Expected Braze type per recommended-event field (Braze dest key -> type). Each field has a
+    // single type across every event, so one table drives coercion and the type-mismatch warning for
+    // both top-level and products[] fields; keys absent from a given event are simply skipped. Control
+    // fields (source, action, products, metadata) are intentionally omitted. Order here is the order
+    // fields appear in the warning.
+    private static final Map<String, BrazeFieldType> FIELD_TYPES = orderedTypes(
+            BRAZE_PRODUCT_ID, BrazeFieldType.STRING,
+            BRAZE_PRODUCT_NAME, BrazeFieldType.STRING,
+            BRAZE_VARIANT_ID, BrazeFieldType.STRING,
+            BRAZE_QUANTITY, BrazeFieldType.INTEGER,
+            BRAZE_PRICE, BrazeFieldType.FLOAT,
+            BRAZE_IMAGE_URL, BrazeFieldType.STRING,
+            BRAZE_PRODUCT_URL, BrazeFieldType.STRING,
+            BRAZE_CART_ID, BrazeFieldType.STRING,
+            BRAZE_CHECKOUT_ID, BrazeFieldType.STRING,
+            BRAZE_ORDER_ID, BrazeFieldType.STRING,
+            BRAZE_CURRENCY, BrazeFieldType.STRING,
+            BRAZE_TOTAL_VALUE, BrazeFieldType.FLOAT,
+            BRAZE_SUBTOTAL_VALUE, BrazeFieldType.FLOAT,
+            BRAZE_TAX, BrazeFieldType.FLOAT,
+            BRAZE_SHIPPING, BrazeFieldType.FLOAT,
+            BRAZE_TOTAL_DISCOUNTS, BrazeFieldType.FLOAT,
+            BRAZE_CANCEL_REASON, BrazeFieldType.STRING,
+            BRAZE_TYPE, BrazeFieldType.STRING_ARRAY,
+            BRAZE_DISCOUNTS, BrazeFieldType.ARRAY);
+
+    private static Map<String, BrazeFieldType> orderedTypes(Object... pairs) {
+        Map<String, BrazeFieldType> map = new LinkedHashMap<>();
+        for (int i = 0; i < pairs.length; i += 2) {
+            map.put((String) pairs[i], (BrazeFieldType) pairs[i + 1]);
+        }
+        return map;
+    }
+
     // Case-insensitive RudderStack event name -> Braze recommended event.
     private static final Map<String, EcommerceEvent> ECOMMERCE_EVENT_MAPPING = buildEcommerceEventMapping();
 
@@ -159,23 +205,32 @@ class Utils {
     // still logged (with required-field warnings) rather than dropped.
     static Map<String, Object> buildEcommerceProperties(EcommerceEvent ecommerceEvent, Map<String, Object> properties) {
         Map<String, Object> props = (properties != null) ? properties : new HashMap<>();
+        Map<String, Object> out;
         switch (ecommerceEvent) {
             case PRODUCT_VIEWED:
-                return buildProductViewed(props);
+                out = buildProductViewed(props);
+                break;
             case PRODUCT_ADDED:
             case PRODUCT_REMOVED:
-                return buildCartUpdated(props, ecommerceEvent.action);
+                out = buildCartUpdated(props, ecommerceEvent.action);
+                break;
             case CHECKOUT_STARTED:
-                return buildCheckoutStarted(props);
+                out = buildCheckoutStarted(props);
+                break;
             case ORDER_COMPLETED:
-                return buildOrderPlaced(props);
+                out = buildOrderPlaced(props);
+                break;
             case ORDER_REFUNDED:
-                return buildOrderRefunded(props);
+                out = buildOrderRefunded(props);
+                break;
             case ORDER_CANCELLED:
-                return buildOrderCancelled(props);
+                out = buildOrderCancelled(props);
+                break;
             default:
                 return new HashMap<>();
         }
+        coerceAndWarnTypes(ecommerceEvent.getBrazeEvent(), out);
+        return out;
     }
 
     // ecommerce.product_viewed — flat, single-product event (no products array, no quantity).
@@ -459,6 +514,133 @@ class Utils {
             RudderLogger.logWarn(String.format(
                     "BrazeIntegrationFactory: recommended event %s is missing required field '%s'; sending event anyway.",
                     brazeEvent, field));
+        }
+    }
+
+    // Coerces each resolved field toward the type Braze expects (in place) and logs a single warning
+    // listing any field whose value still does not match after coercion. The same FIELD_TYPES table
+    // covers both top-level and products[] fields. Values are never dropped: an un-coercible value is
+    // sent as-is and only surfaced in the warning.
+    @SuppressWarnings("unchecked")
+    private static void coerceAndWarnTypes(String brazeEvent, Map<String, Object> out) {
+        List<String> mismatched = new ArrayList<>();
+
+        for (Map.Entry<String, BrazeFieldType> entry : FIELD_TYPES.entrySet()) {
+            if (out.containsKey(entry.getKey())) {
+                Object coerced = coerceToType(out.get(entry.getKey()), entry.getValue());
+                out.put(entry.getKey(), coerced);
+                if (!matchesType(coerced, entry.getValue())) {
+                    mismatched.add(entry.getKey() + " (expected " + entry.getValue() + ")");
+                }
+            }
+        }
+
+        if (out.get(BRAZE_PRODUCTS) instanceof List) {
+            List<Map<String, Object>> products = (List<Map<String, Object>>) out.get(BRAZE_PRODUCTS);
+            for (Map.Entry<String, BrazeFieldType> entry : FIELD_TYPES.entrySet()) {
+                boolean anyMismatch = false;
+                for (Map<String, Object> product : products) {
+                    if (product.containsKey(entry.getKey())) {
+                        Object coerced = coerceToType(product.get(entry.getKey()), entry.getValue());
+                        product.put(entry.getKey(), coerced);
+                        anyMismatch |= !matchesType(coerced, entry.getValue());
+                    }
+                }
+                if (anyMismatch) {
+                    mismatched.add("products[]." + entry.getKey() + " (expected " + entry.getValue() + ")");
+                }
+            }
+        }
+
+        if (!mismatched.isEmpty()) {
+            RudderLogger.logWarn(String.format(
+                    "BrazeIntegrationFactory: recommended event %s has type-mismatched field(s) (sent as-is): %s",
+                    brazeEvent, mismatched));
+        }
+    }
+
+    // Coerces a primitive value toward the expected type where possible: numeric string -> number,
+    // number/boolean -> string. Numbers are left as-is for numeric fields (Braze accepts an integer
+    // where a float is expected). Anything that cannot be coerced is returned unchanged.
+    private static Object coerceToType(Object value, BrazeFieldType type) {
+        switch (type) {
+            case STRING:
+                if (value instanceof Number || value instanceof Boolean) {
+                    return String.valueOf(value);
+                }
+                return value;
+            case FLOAT:
+                if (value instanceof String) {
+                    Double parsed = parseDoubleOrNull((String) value);
+                    return parsed != null ? parsed : value;
+                }
+                return value;
+            case INTEGER:
+                if (value instanceof String) {
+                    Long parsed = parseLongOrNull((String) value);
+                    return parsed != null ? parsed : value;
+                }
+                return value;
+            case STRING_ARRAY:
+            case ARRAY:
+            default:
+                return value;
+        }
+    }
+
+    // Whether a value matches the type Braze expects. 0 / false are valid for their types; a numeric
+    // written as a string (e.g. "29.99") does not match a numeric type.
+    private static boolean matchesType(Object value, BrazeFieldType type) {
+        switch (type) {
+            case STRING:
+                return value instanceof String;
+            case INTEGER:
+                return value instanceof Number && isIntegral((Number) value);
+            case FLOAT:
+                return value instanceof Number;
+            case STRING_ARRAY:
+                return isStringList(value);
+            case ARRAY:
+                return value instanceof List;
+            default:
+                return true;
+        }
+    }
+
+    private static boolean isIntegral(Number value) {
+        if (value instanceof Integer || value instanceof Long || value instanceof Short
+                || value instanceof Byte || value instanceof BigInteger) {
+            return true;
+        }
+        double d = value.doubleValue();
+        return !Double.isNaN(d) && !Double.isInfinite(d) && d == Math.floor(d);
+    }
+
+    private static boolean isStringList(Object value) {
+        if (!(value instanceof List)) {
+            return false;
+        }
+        for (Object item : (List<?>) value) {
+            if (!(item instanceof String)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Double parseDoubleOrNull(String value) {
+        try {
+            return Double.valueOf(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static Long parseLongOrNull(String value) {
+        try {
+            return Long.valueOf(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 }
