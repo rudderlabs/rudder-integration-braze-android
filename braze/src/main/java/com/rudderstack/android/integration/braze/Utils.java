@@ -4,6 +4,10 @@ import com.rudderstack.android.sdk.core.RudderLogger;
 import com.rudderstack.android.sdk.core.ecomm.ECommerceEvents;
 import com.rudderstack.android.sdk.core.ecomm.ECommerceParamNames;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -233,6 +237,40 @@ class Utils {
         return out;
     }
 
+    // Converts the built property Map into a JSONObject (recursively wrapping nested List -> JSONArray
+    // and Map -> JSONObject) so it can be handed to BrazeProperties(JSONObject). This mirrors the
+    // Kotlin integration (BrazeProperties(properties.toJSONObject())): the pinned Braze SDK's
+    // BrazeProperties(Map) constructor silently drops raw java.util.List values, which would strip
+    // products / discounts / type before dispatch. Building a JSONObject first preserves them.
+    static JSONObject toBrazeJson(Map<String, Object> map) {
+        JSONObject json = new JSONObject();
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            try {
+                json.put(entry.getKey(), toBrazeJsonValue(entry.getValue()));
+            } catch (JSONException e) {
+                RudderLogger.logWarn(String.format(
+                        "BrazeIntegrationFactory: failed to add field '%s' to recommended ecommerce event payload: %s",
+                        entry.getKey(), e.getMessage()));
+            }
+        }
+        return json;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object toBrazeJsonValue(Object value) {
+        if (value instanceof Map) {
+            return toBrazeJson((Map<String, Object>) value);
+        }
+        if (value instanceof List) {
+            JSONArray array = new JSONArray();
+            for (Object item : (List<Object>) value) {
+                array.put(toBrazeJsonValue(item));
+            }
+            return array;
+        }
+        return value;
+    }
+
     // ecommerce.product_viewed — flat, single-product event (no products array, no quantity).
     private static Map<String, Object> buildProductViewed(Map<String, Object> props) {
         String brazeEvent = EcommerceEvent.PRODUCT_VIEWED.brazeEvent;
@@ -447,7 +485,13 @@ class Utils {
         List<Map<String, Object>> products = new ArrayList<>();
         for (Object item : rsProducts) {
             if (item instanceof Map) {
-                products.add(buildProduct((Map<String, Object>) item));
+                Map<String, Object> product = buildProduct((Map<String, Object>) item);
+                // Skip empty product maps so an all-empty products array is treated as "no products"
+                // (omitted + missing-field warning) rather than sending products: [ {} ]. Mirrors the
+                // Kotlin integration's trailing filter { it.isNotEmpty() }.
+                if (!product.isEmpty()) {
+                    products.add(product);
+                }
             }
         }
         return products.isEmpty() ? null : products;

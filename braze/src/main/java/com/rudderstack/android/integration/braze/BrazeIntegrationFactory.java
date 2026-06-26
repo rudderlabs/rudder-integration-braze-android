@@ -26,6 +26,8 @@ import com.rudderstack.android.sdk.core.RudderLogger;
 import com.rudderstack.android.sdk.core.RudderMessage;
 import com.rudderstack.android.sdk.core.RudderTraits;
 
+import org.json.JSONObject;
+
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -348,10 +350,13 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
                 Utils.EcommerceEvent ecommerceEvent = Utils.resolveEcommerceEvent(event);
                 if (ecommerceEvent != null) {
                     Map<String, Object> brazeProperties = Utils.buildEcommerceProperties(ecommerceEvent, eventProperties);
+                    // Convert to JSONObject first: BrazeProperties(Map) drops raw List values in the
+                    // pinned Braze SDK, which would strip products / discounts / type before dispatch.
+                    JSONObject brazeJson = Utils.toBrazeJson(brazeProperties);
                     RudderLogger.logDebug(String.format(
-                            "Braze logCustomEvent for recommended ecommerce event %s with properties %% %s",
-                            ecommerceEvent.getBrazeEvent(), brazeProperties.toString()));
-                    this.braze.logCustomEvent(ecommerceEvent.getBrazeEvent(), new BrazeProperties(brazeProperties));
+                            "Braze logCustomEvent for recommended ecommerce event %s with properties %s",
+                            ecommerceEvent.getBrazeEvent(), brazeJson.toString()));
+                    this.braze.logCustomEvent(ecommerceEvent.getBrazeEvent(), new BrazeProperties(brazeJson));
                     return;
                 }
             }
