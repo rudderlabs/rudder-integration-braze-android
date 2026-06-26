@@ -20,6 +20,13 @@ android {
     }
 
     namespace 'com.rudderstack.android.integration.braze'
+
+    testOptions {
+        // Let stubbed android.jar calls (e.g. RudderLogger's android.util.Log warnings) no-op instead
+        // of throwing in plain JVM unit tests. The real org.json (test dependency) shadows the stub, so
+        // the JSON-preservation assertions still run against a genuine JSONObject/JSONArray.
+        unitTests.returnDefaultValues = true
+    }
 }
 
 
@@ -38,6 +45,9 @@ dependencies {
     testImplementation "androidx.test:core-ktx:1.5.0"
     testImplementation "org.hamcrest:hamcrest:2.2"
     testImplementation 'com.rudderstack.android.sdk:core:[1.12,2.0)'
+    // Real org.json on the unit-test classpath (the android.jar stub throws "not mocked"); lets the
+    // ecommerce mapping tests assert on the JSONObject/JSONArray produced by Utils.toBrazeJson.
+    testImplementation 'org.json:json:20210307'
 }
 
 
