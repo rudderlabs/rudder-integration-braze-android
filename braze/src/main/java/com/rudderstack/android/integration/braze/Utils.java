@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 // Stateless mapping logic for Braze recommended ecommerce events (gated by
-// useRecommendedEcommerceEvents). Every method here is a pure props -> Map transform; the actual
+// useEcommerceRecommendedEvents). Every method here is a pure props -> Map transform; the actual
 // braze.logCustomEvent call stays in BrazeIntegrationFactory.
 class Utils {
 
@@ -114,9 +114,10 @@ class Utils {
     private static final Set<String> PRODUCT_VIEWED_CONSUMED_KEYS = new HashSet<>(Arrays.asList(
             EC_PRODUCT_ID, EC_SKU, EC_NAME, EC_VARIANT, EC_PRICE, EC_CURRENCY, EC_IMAGE_URL, EC_URL,
             EC_TYPE));
-    private static final Set<String> CART_UPDATED_CONSUMED_KEYS = new HashSet<>(Arrays.asList(
-            EC_CART_ID, EC_CURRENCY, EC_PRODUCT_ID, EC_SKU, EC_NAME, EC_VARIANT, EC_QUANTITY, EC_PRICE,
-            EC_IMAGE_URL, EC_URL, EC_TOTAL, EC_VALUE, EC_SUBTOTAL_VALUE, EC_TAX, EC_SHIPPING));
+    // Cart-level keys always consumed by cart_updated. Product-field keys (PRODUCT_CONSUMED_KEYS) or
+    // EC_PRODUCTS are added per-event by cartUpdatedConsumedKeys depending on the payload shape.
+    private static final Set<String> CART_UPDATED_BASE_CONSUMED_KEYS = new HashSet<>(Arrays.asList(
+            EC_CART_ID, EC_CURRENCY, EC_TOTAL, EC_VALUE, EC_SUBTOTAL_VALUE, EC_TAX, EC_SHIPPING));
     private static final Set<String> CHECKOUT_STARTED_CONSUMED_KEYS = new HashSet<>(Arrays.asList(
             EC_CHECKOUT_ID, EC_ORDER_ID, EC_CART_ID, EC_TOTAL, EC_REVENUE, EC_VALUE, EC_SUBTOTAL_VALUE,
             EC_CURRENCY, EC_PRODUCTS, EC_TAX, EC_SHIPPING));
@@ -302,19 +303,32 @@ class Utils {
         return out;
     }
 
-    // ecommerce.cart_updated — Product Added/Removed; single top-level product wrapped into a
-    // 1-element products array. action is the only difference between add and remove.
+    // ecommerce.cart_updated — Product Added/Removed. An explicit products[] is mapped item-by-item;
+    // otherwise the top-level product fields are folded into a single-element products array. action is
+    // the only difference between add and remove.
     private static Map<String, Object> buildCartUpdated(Map<String, Object> props, String action) {
         String brazeEvent = EcommerceEvent.PRODUCT_ADDED.brazeEvent; // ecommerce.cart_updated
         Map<String, Object> out = new HashMap<>();
 
         Object cartId = firstNonNull(props, EC_CART_ID);
         Object currency = firstNonNull(props, EC_CURRENCY);
-        Map<String, Object> product = buildProductFields(props);
+
+        List<Map<String, Object>> products;
+        if (explicitProductsArray(props) != null) {
+            products = buildProducts(props);
+        } else {
+            Map<String, Object> product = buildProductFields(props);
+            if (product.isEmpty()) {
+                products = null;
+            } else {
+                products = new ArrayList<>();
+                products.add(product);
+            }
+        }
 
         warnIfMissing(brazeEvent, BRAZE_CART_ID, cartId);
         warnIfMissing(brazeEvent, BRAZE_CURRENCY, currency);
-        if (product.isEmpty()) {
+        if (products == null) {
             warnIfMissing(brazeEvent, BRAZE_PRODUCTS, null);
         }
 
@@ -325,14 +339,12 @@ class Utils {
         putIfPresent(out, BRAZE_TAX, firstNonNull(props, EC_TAX));
         putIfPresent(out, BRAZE_SHIPPING, firstNonNull(props, EC_SHIPPING));
         out.put(BRAZE_ACTION, action);
-        if (!product.isEmpty()) {
-            List<Map<String, Object>> products = new ArrayList<>();
-            products.add(product);
+        if (products != null) {
             out.put(BRAZE_PRODUCTS, products);
         }
         out.put(SOURCE_KEY, SOURCE);
 
-        putMetadata(out, props, CART_UPDATED_CONSUMED_KEYS);
+        putMetadata(out, props, cartUpdatedConsumedKeys(props));
         return out;
     }
 
@@ -365,7 +377,7 @@ class Utils {
         putIfPresent(out, BRAZE_SHIPPING, firstNonNull(props, EC_SHIPPING));
         out.put(SOURCE_KEY, SOURCE);
 
-        putMetadata(out, props, CHECKOUT_STARTED_CONSUMED_KEYS);
+        putMetadata(out, props, consumedKeysWithProductsArray(CHECKOUT_STARTED_CONSUMED_KEYS, props));
         return out;
     }
 
@@ -401,7 +413,7 @@ class Utils {
         putIfPresent(out, BRAZE_DISCOUNTS, firstNonNull(props, EC_DISCOUNTS));
         out.put(SOURCE_KEY, SOURCE);
 
-        putMetadata(out, props, ORDER_PLACED_CONSUMED_KEYS);
+        putMetadata(out, props, consumedKeysWithProductsArray(ORDER_PLACED_CONSUMED_KEYS, props));
         return out;
     }
 
@@ -433,7 +445,7 @@ class Utils {
         putIfPresent(out, BRAZE_DISCOUNTS, firstNonNull(props, EC_DISCOUNTS));
         out.put(SOURCE_KEY, SOURCE);
 
-        putMetadata(out, props, ORDER_REFUNDED_CONSUMED_KEYS);
+        putMetadata(out, props, consumedKeysWithProductsArray(ORDER_REFUNDED_CONSUMED_KEYS, props));
         return out;
     }
 
@@ -471,30 +483,65 @@ class Utils {
         putIfPresent(out, BRAZE_DISCOUNTS, firstNonNull(props, EC_DISCOUNTS));
         out.put(SOURCE_KEY, SOURCE);
 
-        putMetadata(out, props, ORDER_CANCELLED_CONSUMED_KEYS);
+        putMetadata(out, props, consumedKeysWithProductsArray(ORDER_CANCELLED_CONSUMED_KEYS, props));
         return out;
     }
 
+    // Returns props[products] only when it is a list whose every element is a Map. A non-list or
+    // mixed/malformed list returns null so the original value can flow through to metadata (never dropped).
     @SuppressWarnings("unchecked")
-    private static List<Map<String, Object>> buildProducts(Map<String, Object> props) {
+    private static List<Map<String, Object>> explicitProductsArray(Map<String, Object> props) {
         Object raw = props.get(EC_PRODUCTS);
         if (!(raw instanceof List)) {
             return null;
         }
-        List<?> rsProducts = (List<?>) raw;
+        for (Object item : (List<?>) raw) {
+            if (!(item instanceof Map)) {
+                return null;
+            }
+        }
+        return (List<Map<String, Object>>) raw;
+    }
+
+    private static List<Map<String, Object>> buildProducts(Map<String, Object> props) {
+        List<Map<String, Object>> rsProducts = explicitProductsArray(props);
+        if (rsProducts == null) {
+            return null;
+        }
         List<Map<String, Object>> products = new ArrayList<>();
-        for (Object item : rsProducts) {
-            if (item instanceof Map) {
-                Map<String, Object> product = buildProduct((Map<String, Object>) item);
-                // Skip empty product maps so an all-empty products array is treated as "no products"
-                // (omitted + missing-field warning) rather than sending products: [ {} ]. Mirrors the
-                // Kotlin integration's trailing filter { it.isNotEmpty() }.
-                if (!product.isEmpty()) {
-                    products.add(product);
-                }
+        for (Map<String, Object> item : rsProducts) {
+            Map<String, Object> product = buildProduct(item);
+            // Skip empty product maps so an all-empty products array is treated as "no products"
+            // (omitted + missing-field warning) rather than sending products: [ {} ]. Mirrors the
+            // Kotlin integration's trailing filter { it.isNotEmpty() }.
+            if (!product.isEmpty()) {
+                products.add(product);
             }
         }
         return products.isEmpty() ? null : products;
+    }
+
+    // Cart-level keys are always consumed. With an explicit products[] its items are mapped and
+    // products is consumed; otherwise the top-level product fields are folded into products[0] and consumed.
+    private static Set<String> cartUpdatedConsumedKeys(Map<String, Object> props) {
+        Set<String> keys = new HashSet<>(CART_UPDATED_BASE_CONSUMED_KEYS);
+        if (explicitProductsArray(props) != null) {
+            keys.add(EC_PRODUCTS);
+        } else {
+            keys.addAll(PRODUCT_CONSUMED_KEYS);
+        }
+        return keys;
+    }
+
+    // products is consumed (kept out of metadata) only when it is an explicit array of objects we build
+    // from. A non-array/malformed value is left unconsumed so it flows through to metadata, not dropped.
+    private static Set<String> consumedKeysWithProductsArray(Set<String> base, Map<String, Object> props) {
+        if (explicitProductsArray(props) != null) {
+            return base;
+        }
+        Set<String> adjusted = new HashSet<>(base);
+        adjusted.remove(EC_PRODUCTS);
+        return adjusted;
     }
 
     private static Map<String, Object> buildProduct(Map<String, Object> rsProduct) {

@@ -124,7 +124,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
 
     // Recommended ecommerce events config flag (default off; on = hard cutover). The mapping logic
     // itself lives in Utils.
-    private static final String USE_RECOMMENDED_ECOMMERCE_EVENTS = "useRecommendedEcommerceEvents";
+    private static final String USE_ECOMMERCE_RECOMMENDED_EVENTS = "useEcommerceRecommendedEvents";
 
     // Array constants
     private static final Set<String> MALE_KEYS = new HashSet<>(Arrays.asList("M",
@@ -150,7 +150,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
     private boolean autoInAppMessageRegEnabled;
     private boolean supportDedup = false; // default it to false
     private ConnectionMode connectionMode;
-    private boolean useRecommendedEcommerceEvents = false;
+    private boolean useEcommerceRecommendedEvents = false;
 
     // Previous identify payload
     private RudderMessage previousIdentifyElement = null;
@@ -267,7 +267,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             this.connectionMode = getConnectionMode(destinationConfig);
 
             // check for recommended ecommerce events flag. default false
-            this.useRecommendedEcommerceEvents = getBoolean(destinationConfig.get(USE_RECOMMENDED_ECOMMERCE_EVENTS));
+            this.useEcommerceRecommendedEvents = getBoolean(destinationConfig.get(USE_ECOMMERCE_RECOMMENDED_EVENTS));
 
             // all good. initialize braze sdk
             BrazeConfig.Builder builder =
@@ -346,7 +346,7 @@ public class BrazeIntegrationFactory extends RudderIntegration<Braze> {
             // legacy Order Completed / logCustomEvent path. Events with no recommended-event
             // counterpart (Product Clicked, Cart Viewed, Install Attributed, etc.) fall through
             // and keep their existing behaviour.
-            if (useRecommendedEcommerceEvents) {
+            if (useEcommerceRecommendedEvents) {
                 Utils.EcommerceEvent ecommerceEvent = Utils.resolveEcommerceEvent(event);
                 if (ecommerceEvent != null) {
                     Map<String, Object> brazeProperties = Utils.buildEcommerceProperties(ecommerceEvent, eventProperties);

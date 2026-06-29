@@ -233,4 +233,69 @@ public class UtilsTest {
         assertEquals("shoe", type.get(0));
         assertEquals("running", type.get(1));
     }
+
+    // ----- malformed products -> metadata (never dropped) -----
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void malformedProductsValue_flowsToMetadataNotDropped() {
+        // A non-list products value must not be silently dropped; it is preserved under metadata.
+        Map<String, Object> out = buildOrderCompleted(map(
+                "order_id", "O-100",
+                "products", "not-a-list"));
+        assertFalse(out.containsKey("products"));
+        Map<String, Object> metadata = (Map<String, Object>) out.get("metadata");
+        assertEquals("not-a-list", metadata.get("products"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void mixedProductsArray_flowsToMetadataNotPartiallyMapped() {
+        // A list containing a non-Map element is treated as malformed (all-or-nothing) and preserved
+        // under metadata rather than partially mapped.
+        List<Object> mixed = list(map("product_id", "P1"), "junk");
+        Map<String, Object> out = buildOrderCompleted(map("order_id", "O-100", "products", mixed));
+        assertFalse(out.containsKey("products"));
+        Map<String, Object> metadata = (Map<String, Object>) out.get("metadata");
+        assertEquals(mixed, metadata.get("products"));
+    }
+
+    // ----- cart_updated products[] -----
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void cartUpdated_mapsExplicitProductsArrayItemByItem() {
+        // An explicit products[] on Product Added is mapped item-by-item (not folded from top-level).
+        Map<String, Object> out = Utils.buildEcommerceProperties(EcommerceEvent.PRODUCT_ADDED, map(
+                "cart_id", "C-1",
+                "products", list(
+                        map("product_id", "P1", "name", "Mug"),
+                        map("product_id", "P2", "name", "Saucer"))));
+
+        assertEquals("add", out.get("action"));
+        List<Map<String, Object>> products = (List<Map<String, Object>>) out.get("products");
+        assertEquals(2, products.size());
+        assertEquals("P1", products.get(0).get("product_id"));
+        assertEquals("Mug", products.get(0).get("product_name"));
+        assertEquals("P2", products.get(1).get("product_id"));
+        // products[] is consumed, so it is not duplicated into metadata.
+        assertFalse(out.containsKey("metadata"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void cartUpdated_fallsBackToTopLevelProductFields() {
+        // Without products[], top-level product fields fold into a single-element products array.
+        Map<String, Object> out = Utils.buildEcommerceProperties(EcommerceEvent.PRODUCT_REMOVED, map(
+                "cart_id", "C-1",
+                "product_id", "P1",
+                "name", "Mug",
+                "price", 9.99));
+
+        assertEquals("remove", out.get("action"));
+        List<Map<String, Object>> products = (List<Map<String, Object>>) out.get("products");
+        assertEquals(1, products.size());
+        assertEquals("P1", products.get(0).get("product_id"));
+        assertEquals("Mug", products.get(0).get("product_name"));
+    }
 }
