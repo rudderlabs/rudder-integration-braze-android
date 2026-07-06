@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 2.3.0 (2026-07-06)
+
+
+### Features
+
+* **ecommerce:** map track events to Braze recommended ecommerce events ([#63](https://github.com/rudderlabs/rudder-integration-braze-android/issues/63)) ([5e2a010](https://github.com/rudderlabs/rudder-integration-braze-android/commit/5e2a01039bf9f5bc15ad75c4c5762759d30eb61b))
+
 ## [2.2.0](https://github.com/rudderlabs/rudder-integration-braze-android/compare/v2.1.1...v2.2.0) (2026-03-18)
 
 
