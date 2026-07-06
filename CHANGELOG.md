@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.3.0](https://github.com/rudderlabs/rudder-integration-braze-android/compare/v2.2.0...v2.3.0) (2026-07-06)
+
+
+### Features
+
+* **ecommerce:** map track events to Braze recommended ecommerce events ([#63](https://github.com/rudderlabs/rudder-integration-braze-android/issues/63)) ([5e2a010](https://github.com/rudderlabs/rudder-integration-braze-android/commit/5e2a01039bf9f5bc15ad75c4c5762759d30eb61b))
+
+
+### Bug Fixes
+
+* **release:** commit package.json and package-lock.json in draft release ([#65](https://github.com/rudderlabs/rudder-integration-braze-android/issues/65)) ([e7aeedf](https://github.com/rudderlabs/rudder-integration-braze-android/commit/e7aeedfa78dc3b345b668f71ec2a7a74a604d62c))
+* **release:** fetch full master history when calculating release version ([#67](https://github.com/rudderlabs/rudder-integration-braze-android/issues/67)) ([bfeebc0](https://github.com/rudderlabs/rudder-integration-braze-android/commit/bfeebc04a217e82ee7f0f45fa2f49ea3a2994aa4))
+* **vuln:** pin and bump action refs (SEC-171) ([76fa2fe](https://github.com/rudderlabs/rudder-integration-braze-android/commit/76fa2fec1b77c9d13e3e7b44b177289442369f0e))
+* **vuln:** remediate GHA script injection ([cb271d0](https://github.com/rudderlabs/rudder-integration-braze-android/commit/cb271d055291962f5db4ed4534e616c73de8f3af))
+
 ## [2.2.0](https://github.com/rudderlabs/rudder-integration-braze-android/compare/v2.1.1...v2.2.0) (2026-03-18)
 
 
