@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### 2.2.1 (2026-07-06)
+
+
+### Bug Fixes
+
+* **release:** commit package.json and package-lock.json in draft release ([#65](https://github.com/rudderlabs/rudder-integration-braze-android/issues/65)) ([e7aeedf](https://github.com/rudderlabs/rudder-integration-braze-android/commit/e7aeedfa78dc3b345b668f71ec2a7a74a604d62c))
+
 ## [2.2.0](https://github.com/rudderlabs/rudder-integration-braze-android/compare/v2.1.1...v2.2.0) (2026-03-18)
 
 
